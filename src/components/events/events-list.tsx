@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Event, User, Region } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,7 +29,6 @@ export function EventsList({
   showConfirm,
   showRejectionReason,
 }: EventsListProps) {
-  const router = useRouter();
   const [confirmEvent, setConfirmEvent] = useState<EventWithRelations | null>(null);
   const [viewEvent, setViewEvent] = useState<EventWithRelations | null>(null);
 

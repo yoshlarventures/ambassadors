@@ -39,12 +39,9 @@ interface GalleryPhoto {
   caption: string | null;
 }
 
-export function ViewSessionDialog({
-  session,
-  clubId,
-  open,
-  onOpenChange,
-}: ViewSessionDialogProps) {
+export function ViewSessionDialog(props: ViewSessionDialogProps) {
+  const { session, open, onOpenChange } = props;
+  // clubId available via props.clubId if needed
   const [loading, setLoading] = useState(true);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
@@ -72,7 +69,7 @@ export function ViewSessionDialog({
         .select("id, image_url, caption")
         .eq("session_id", session.id);
 
-      setAttendance(attendanceData as AttendanceRecord[] || []);
+      setAttendance((attendanceData as unknown as AttendanceRecord[]) || []);
       setPhotos(photosData || []);
       setLoading(false);
     };

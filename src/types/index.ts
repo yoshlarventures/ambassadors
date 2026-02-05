@@ -270,5 +270,4 @@ export interface EventWithRelations extends Event {
 export interface SessionWithRelations extends Session {
   club?: Club;
   attendance?: SessionAttendance[];
-  attendance_rate?: number;
 }

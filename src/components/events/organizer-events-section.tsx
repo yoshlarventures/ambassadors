@@ -127,11 +127,9 @@ function EventItem({
   );
 }
 
-export function OrganizerEventsSection({
-  events,
-  userId,
-  title = "My Events",
-}: OrganizerEventsSectionProps) {
+export function OrganizerEventsSection(props: OrganizerEventsSectionProps) {
+  const { events, title = "My Events" } = props;
+  // userId available via props.userId if needed
   const router = useRouter();
   const [confirmEvent, setConfirmEvent] = useState<EventWithRelations | null>(null);
   const [viewEvent, setViewEvent] = useState<EventWithRelations | null>(null);
