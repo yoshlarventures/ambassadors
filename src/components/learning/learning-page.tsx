@@ -102,7 +102,7 @@ export function LearningPage({ user }: LearningPageProps) {
       case "email":
         return user.email;
       case "phone":
-        return manualPhone || null;
+        return user.phone || manualPhone || null;
       case "telegram":
         return manualTelegram || null;
       default:
@@ -208,8 +208,8 @@ export function LearningPage({ user }: LearningPageProps) {
       type: "phone",
       label: "Phone",
       icon: <Phone className="h-4 w-4" />,
-      hasValue: !!manualPhone,
-      showInput: true,
+      hasValue: !!manualPhone || !!user.phone,
+      showInput: !user.phone,
     },
     {
       type: "telegram",
@@ -280,7 +280,7 @@ export function LearningPage({ user }: LearningPageProps) {
                           </span>
                           {!option.showInput && (
                             <span className="flex-1 text-sm text-muted-foreground truncate">
-                              {option.type === "email" ? user.email : ""}
+                              {option.type === "email" ? user.email : option.type === "phone" ? user.phone : ""}
                             </span>
                           )}
                         </label>

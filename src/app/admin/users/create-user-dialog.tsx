@@ -39,14 +39,18 @@ export function CreateUserDialog({ regions }: CreateUserDialogProps) {
   const [loading, setLoading] = useState(false);
 
   // Form state
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<CreatableRole>("ambassador");
   const [regionId, setRegionId] = useState<string>("none");
 
   const resetForm = () => {
-    setFullName("");
+    setFirstName("");
+    setLastName("");
+    setPhone("");
     setEmail("");
     setPassword("");
     setRole("ambassador");
@@ -57,8 +61,16 @@ export function CreateUserDialog({ regions }: CreateUserDialogProps) {
     e.preventDefault();
 
     // Client-side validation
-    if (!fullName.trim()) {
-      toast.error("Full name is required");
+    if (!firstName.trim()) {
+      toast.error("First name is required");
+      return;
+    }
+    if (!lastName.trim()) {
+      toast.error("Last name is required");
+      return;
+    }
+    if (!phone.trim()) {
+      toast.error("Phone number is required");
       return;
     }
     if (!email.trim()) {
@@ -83,7 +95,9 @@ export function CreateUserDialog({ regions }: CreateUserDialogProps) {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          full_name: fullName.trim(),
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          phone: phone.trim(),
           email: email.trim().toLowerCase(),
           password,
           role,
@@ -130,19 +144,51 @@ export function CreateUserDialog({ regions }: CreateUserDialogProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">
+                  First Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  placeholder="John"
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">
+                  Last Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  placeholder="Doe"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="phone">
+                Phone Number <span className="text-destructive">*</span>
+              </Label>
               <Input
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter full name"
+                id="phone"
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="+998901234567"
                 disabled={loading}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">
+                Email <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -154,7 +200,9 @@ export function CreateUserDialog({ regions }: CreateUserDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Temporary Password</Label>
+              <Label htmlFor="password">
+                Temporary Password <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="password"
                 type="password"

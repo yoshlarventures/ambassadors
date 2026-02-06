@@ -5,7 +5,9 @@ import { z } from 'zod';
 
 const createUserSchema = z.object({
   email: z.string().email('Invalid email address'),
-  full_name: z.string().min(2, 'Name must be at least 2 characters'),
+  first_name: z.string().min(1, 'First name is required'),
+  last_name: z.string().min(1, 'Last name is required'),
+  phone: z.string().min(1, 'Phone number is required'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   role: z.enum(['regional_leader', 'ambassador']),
   region_id: z.string().uuid().optional().nullable(),
@@ -43,7 +45,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, full_name, password, role, region_id } = validationResult.data;
+    const { email, first_name, last_name, phone, password, role, region_id } = validationResult.data;
+    const full_name = `${first_name} ${last_name}`;
 
     // Use admin client to create the user
     const adminClient = createAdminClient();
@@ -69,6 +72,9 @@ export async function POST(request: NextRequest) {
       email_confirm: true,
       user_metadata: {
         full_name,
+        first_name,
+        last_name,
+        phone,
       },
     });
 
@@ -87,14 +93,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update the user's role and region in the users table
+    // Update the user's role, region, and phone in the users table
     // The database trigger should have already created the user row
     const { error: updateError } = await adminClient
       .from('users')
       .update({
         role,
         region_id: region_id || null,
-        full_name, // Ensure full_name is set correctly
+        full_name,
+        phone,
       })
       .eq('id', newAuthUser.user.id);
 
@@ -114,6 +121,7 @@ export async function POST(request: NextRequest) {
         id: newAuthUser.user.id,
         email: newAuthUser.user.email,
         full_name,
+        phone,
         role,
         region_id,
       },
