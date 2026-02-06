@@ -17,6 +17,7 @@ const sidebarItems: SidebarItem[] = [
       { title: "Pending Review", href: "/lead/reports" },
     ],
   },
+  { title: "Tasks", href: "/lead/tasks", icon: "ListTodo" },
   { title: "Resources", href: "/lead/resources", icon: "BookOpen" },
 ];
 
