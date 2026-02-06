@@ -23,6 +23,8 @@ export interface User {
   region_id: string | null;
   phone: string | null;
   bio: string | null;
+  exode_user_id?: number | null;
+  exode_linked_at?: string | null;
   created_at: string;
   updated_at: string;
 }

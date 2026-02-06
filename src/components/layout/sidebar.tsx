@@ -19,6 +19,7 @@ import {
   Image as ImageIcon,
   ChevronDown,
   ChevronRight,
+  GraduationCap,
 } from "lucide-react";
 import { useState, Suspense } from "react";
 
@@ -34,6 +35,7 @@ const iconMap = {
   BarChart3,
   Trophy,
   ImageIcon,
+  GraduationCap,
 } as const;
 
 export type IconName = keyof typeof iconMap;
