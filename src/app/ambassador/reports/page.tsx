@@ -17,24 +17,24 @@ async function getAmbassadorReports(ambassadorId: string) {
   return reports || [];
 }
 
-async function getClub(ambassadorId: string) {
+async function getClubs(ambassadorId: string) {
   const supabase = await createClient();
-  const { data: assignment } = await supabase
+  const { data: assignments } = await supabase
     .from("club_ambassadors")
     .select("club:clubs(id, name)")
-    .eq("ambassador_id", ambassadorId)
-    .limit(1)
-    .single();
-  return assignment?.club as unknown as { id: string; name: string } | null;
+    .eq("ambassador_id", ambassadorId);
+
+  if (!assignments || assignments.length === 0) return [];
+  return assignments.map(a => a.club as unknown as { id: string; name: string }).filter(Boolean);
 }
 
 export default async function AmbassadorReportsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
 
-  const club = await getClub(user.id);
+  const clubs = await getClubs(user.id);
 
-  if (!club) {
+  if (clubs.length === 0) {
     return (
       <div className="space-y-6">
         <div>
@@ -57,14 +57,17 @@ export default async function AmbassadorReportsPage() {
   const approved = reports.filter(r => r.status === "approved");
   const rejected = reports.filter(r => r.status === "rejected");
 
+  const clubNames = clubs.map(c => c.name).join(" | ");
+  const clubIds = clubs.map(c => c.id);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Reports</h1>
-          <p className="text-muted-foreground">Monthly activity reports for {club.name}</p>
+          <p className="text-muted-foreground">Monthly activity reports for {clubNames}</p>
         </div>
-        <CreateReportDialog clubId={club.id} userId={user.id} existingReports={reports} />
+        <CreateReportDialog clubIds={clubIds} userId={user.id} existingReports={reports} />
       </div>
 
       <Tabs defaultValue="drafts" className="space-y-4">

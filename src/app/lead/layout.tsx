@@ -8,7 +8,15 @@ const sidebarItems: SidebarItem[] = [
   { title: "Ambassadors", href: "/lead/ambassadors", icon: "Users" },
   { title: "Clubs", href: "/lead/clubs", icon: "Building2" },
   { title: "Events", href: "/lead/events", icon: "Calendar" },
-  { title: "Reports", href: "/lead/reports", icon: "FileText" },
+  {
+    title: "Reports",
+    href: "/lead/reports",
+    icon: "FileText",
+    subItems: [
+      { title: "Overview", href: "/lead/reports/overview" },
+      { title: "Pending Review", href: "/lead/reports" },
+    ],
+  },
   { title: "Resources", href: "/lead/resources", icon: "BookOpen" },
 ];
 

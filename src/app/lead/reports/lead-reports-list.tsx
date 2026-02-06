@@ -20,11 +20,13 @@ import { toast } from "sonner";
 import {
   Calendar,
   Users,
+  UserPlus,
   FileText,
   Trophy,
   Check,
   X,
   Loader2,
+  Percent,
 } from "lucide-react";
 
 const MONTHS = [
@@ -130,18 +132,22 @@ export function LeadReportsList({ reports, userId, showActions }: LeadReportsLis
                 <span className="text-muted-foreground"> • {report.clubs?.name}</span>
               </p>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span>{report.sessions_count} sessions</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span>{report.total_attendance} attendance</span>
+                  <Percent className="h-4 w-4 text-muted-foreground" />
+                  <span>Attendance: {report.attendance_rate != null ? `${report.attendance_rate}%` : "N/A"}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground" />
                   <span>{report.events_count} events</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <UserPlus className="h-4 w-4 text-muted-foreground" />
+                  <span>{report.new_members_count} new members</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Trophy className="h-4 w-4 text-muted-foreground" />

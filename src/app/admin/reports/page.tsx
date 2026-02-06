@@ -1,12 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-
-const MONTHS = [
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-];
+import { AdminReportsTable } from "./admin-reports-table";
 
 async function getAllReports() {
   const supabase = await createClient();
@@ -14,13 +8,40 @@ async function getAllReports() {
     .from("reports")
     .select(`
       *,
-      ambassador:users!reports_ambassador_id_fkey(full_name),
+      ambassador:users!reports_ambassador_id_fkey(id, full_name),
       clubs(name, regions(name)),
       reviewer:users!reports_reviewer_id_fkey(full_name)
     `)
     .order("year", { ascending: false })
     .order("month", { ascending: false });
-  return reports || [];
+
+  if (!reports || reports.length === 0) return [];
+
+  // Get all ambassador IDs
+  const ambassadorIds = Array.from(new Set(reports.map(r => r.ambassador?.id).filter(Boolean)));
+
+  // Fetch all clubs for these ambassadors
+  const { data: clubAmbassadors } = await supabase
+    .from("club_ambassadors")
+    .select("ambassador_id, clubs(id, name)")
+    .in("ambassador_id", ambassadorIds);
+
+  // Map ambassador_id to their clubs
+  const ambassadorClubsMap = new Map<string, string[]>();
+  clubAmbassadors?.forEach((ca) => {
+    const club = ca.clubs as unknown as { id: string; name: string } | null;
+    if (club) {
+      const existing = ambassadorClubsMap.get(ca.ambassador_id) || [];
+      existing.push(club.name);
+      ambassadorClubsMap.set(ca.ambassador_id, existing);
+    }
+  });
+
+  // Attach all clubs to each report
+  return reports.map(report => ({
+    ...report,
+    all_clubs: report.ambassador?.id ? ambassadorClubsMap.get(report.ambassador.id) || [] : [],
+  }));
 }
 
 export default async function AdminReportsPage() {
@@ -38,58 +59,7 @@ export default async function AdminReportsPage() {
           <CardTitle>All Reports ({reports.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Period</TableHead>
-                <TableHead>Ambassador</TableHead>
-                <TableHead>Club</TableHead>
-                <TableHead>Region</TableHead>
-                <TableHead>Sessions</TableHead>
-                <TableHead>Events</TableHead>
-                <TableHead>Points</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reports.map((report) => (
-                <TableRow key={report.id}>
-                  <TableCell>
-                    {MONTHS[report.month - 1]} {report.year}
-                  </TableCell>
-                  <TableCell>
-                    {(report.ambassador as { full_name: string } | null)?.full_name}
-                  </TableCell>
-                  <TableCell>
-                    {(report.clubs as { name: string } | null)?.name}
-                  </TableCell>
-                  <TableCell>
-                    {(report.clubs as { regions: { name: string } | null } | null)?.regions?.name}
-                  </TableCell>
-                  <TableCell>{report.sessions_count}</TableCell>
-                  <TableCell>{report.events_count}</TableCell>
-                  <TableCell>{report.points_earned}</TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      report.status === "approved" ? "default" :
-                      report.status === "submitted" ? "outline" :
-                      report.status === "rejected" ? "destructive" :
-                      "secondary"
-                    }>
-                      {report.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {reports.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground">
-                    No reports found
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+          <AdminReportsTable reports={reports} />
         </CardContent>
       </Card>
     </div>

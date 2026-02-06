@@ -16,16 +16,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { toast } from "sonner";
 import {
   Calendar,
-  Users,
+  UserPlus,
   FileText,
   Trophy,
   Send,
   Pencil,
   AlertCircle,
   Loader2,
+  Percent,
+  Trash2,
 } from "lucide-react";
 
 const MONTHS = [
@@ -36,6 +46,13 @@ const MONTHS = [
 type ReportWithReviewer = Report & {
   reviewer: Pick<User, "full_name"> | null;
 };
+
+type DetailType = "sessions" | "events" | "members" | "points";
+
+interface DetailData {
+  type: DetailType;
+  report: ReportWithReviewer;
+}
 
 interface ReportsListProps {
   reports: ReportWithReviewer[];
@@ -50,6 +67,13 @@ export function ReportsList({ reports, showEdit, showRejectionReason }: ReportsL
   const [highlights, setHighlights] = useState("");
   const [challenges, setChallenges] = useState("");
   const [goals, setGoals] = useState("");
+
+  // Detail dialog state - uses stored snapshot data (no loading needed)
+  const [detailData, setDetailData] = useState<DetailData | null>(null);
+
+  // Delete confirmation state
+  const [deleteReport, setDeleteReport] = useState<ReportWithReviewer | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const handleEdit = (report: ReportWithReviewer) => {
     setEditReport(report);
@@ -101,9 +125,46 @@ export function ReportsList({ reports, showEdit, showRejectionReason }: ReportsL
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteReport) return;
+    setDeleteLoading(true);
+
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("reports")
+      .delete()
+      .eq("id", deleteReport.id);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Report deleted!");
+      setDeleteReport(null);
+      router.refresh();
+    }
+
+    setDeleteLoading(false);
+  };
+
+  // Uses stored snapshot data - no database fetching needed
+  const handleMetricClick = (type: DetailType, report: ReportWithReviewer) => {
+    setDetailData({ type, report });
+  };
+
   if (reports.length === 0) {
     return <p className="text-muted-foreground text-center py-8">No reports found</p>;
   }
+
+  const getDetailTitle = () => {
+    if (!detailData) return "";
+    const monthYear = `${MONTHS[detailData.report.month - 1]} ${detailData.report.year}`;
+    switch (detailData.type) {
+      case "sessions": return `Sessions - ${monthYear}`;
+      case "events": return `Events - ${monthYear}`;
+      case "members": return `New Members - ${monthYear}`;
+      case "points": return `Points Earned - ${monthYear}`;
+    }
+  };
 
   return (
     <>
@@ -128,23 +189,42 @@ export function ReportsList({ reports, showEdit, showRejectionReason }: ReportsL
                 </Badge>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div className="flex items-center gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
+                <button
+                  onClick={() => handleMetricClick("sessions", report)}
+                  className="flex items-center gap-2 hover:text-primary hover:underline underline-offset-2 transition-colors text-left"
+                >
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span>{report.sessions_count} sessions</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span>{report.total_attendance} attendance</span>
-                </div>
-                <div className="flex items-center gap-2">
+                </button>
+                <button
+                  onClick={() => handleMetricClick("sessions", report)}
+                  className="flex items-center gap-2 hover:text-primary hover:underline underline-offset-2 transition-colors text-left"
+                >
+                  <Percent className="h-4 w-4 text-muted-foreground" />
+                  <span>{report.attendance_rate != null ? `${report.attendance_rate}%` : "N/A"}</span>
+                </button>
+                <button
+                  onClick={() => handleMetricClick("events", report)}
+                  className="flex items-center gap-2 hover:text-primary hover:underline underline-offset-2 transition-colors text-left"
+                >
                   <FileText className="h-4 w-4 text-muted-foreground" />
                   <span>{report.events_count} events</span>
-                </div>
-                <div className="flex items-center gap-2">
+                </button>
+                <button
+                  onClick={() => handleMetricClick("members", report)}
+                  className="flex items-center gap-2 hover:text-primary hover:underline underline-offset-2 transition-colors text-left"
+                >
+                  <UserPlus className="h-4 w-4 text-muted-foreground" />
+                  <span>{report.new_members_count} new</span>
+                </button>
+                <button
+                  onClick={() => handleMetricClick("points", report)}
+                  className="flex items-center gap-2 hover:text-primary hover:underline underline-offset-2 transition-colors text-left"
+                >
                   <Trophy className="h-4 w-4 text-muted-foreground" />
                   <span>{report.points_earned} pts</span>
-                </div>
+                </button>
               </div>
 
               {report.highlights && (
@@ -175,9 +255,21 @@ export function ReportsList({ reports, showEdit, showRejectionReason }: ReportsL
                 </Button>
               )}
               {report.status === "draft" && (
+                <>
+                  <Button size="sm" variant="outline" onClick={() => setDeleteReport(report)}>
+                    <Trash2 className="mr-1 h-4 w-4" />
+                    Delete
+                  </Button>
+                  <Button size="sm" onClick={() => handleSubmit(report.id)}>
+                    <Send className="mr-1 h-4 w-4" />
+                    Submit
+                  </Button>
+                </>
+              )}
+              {report.status === "rejected" && (
                 <Button size="sm" onClick={() => handleSubmit(report.id)}>
                   <Send className="mr-1 h-4 w-4" />
-                  Submit
+                  Resubmit
                 </Button>
               )}
             </div>
@@ -235,6 +327,162 @@ export function ReportsList({ reports, showEdit, showRejectionReason }: ReportsL
             <Button onClick={handleSave} disabled={loading}>
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Detail Dialog - Uses stored snapshot data (no database queries) */}
+      <Dialog open={!!detailData} onOpenChange={(open) => !open && setDetailData(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{getDetailTitle()}</DialogTitle>
+          </DialogHeader>
+
+          <div className="py-4">
+            {/* Sessions Table - from sessions_data snapshot */}
+            {detailData?.type === "sessions" && (
+              detailData.report.sessions_data && detailData.report.sessions_data.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Attendance</TableHead>
+                      <TableHead>Rate</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {detailData.report.sessions_data.map((session) => (
+                      <TableRow key={session.id}>
+                        <TableCell>
+                          {new Date(session.session_date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>{session.title}</TableCell>
+                        <TableCell>{session.attendance_count || 0}</TableCell>
+                        <TableCell>
+                          {session.attendance_rate != null ? `${session.attendance_rate}%` : "N/A"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No confirmed sessions this month</p>
+              )
+            )}
+
+            {/* Events Table - from events_data snapshot */}
+            {detailData?.type === "events" && (
+              detailData.report.events_data && detailData.report.events_data.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Location</TableHead>
+                      <TableHead>Attendees</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {detailData.report.events_data.map((event) => (
+                      <TableRow key={event.id}>
+                        <TableCell>
+                          {new Date(event.event_date).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>{event.title}</TableCell>
+                        <TableCell>{event.location}</TableCell>
+                        <TableCell>{event.confirmed_attendees || 0}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No completed events this month</p>
+              )
+            )}
+
+            {/* Members Table - from members_data snapshot */}
+            {detailData?.type === "members" && (
+              detailData.report.members_data && detailData.report.members_data.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Joined</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {detailData.report.members_data.map((member) => (
+                      <TableRow key={member.id}>
+                        <TableCell>{member.user_name || "Unknown"}</TableCell>
+                        <TableCell>{member.user_email || "-"}</TableCell>
+                        <TableCell>
+                          {member.joined_at ? new Date(member.joined_at).toLocaleDateString() : "-"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No new members this month</p>
+              )
+            )}
+
+            {/* Points Table - from points_data snapshot */}
+            {detailData?.type === "points" && (
+              detailData.report.points_data && detailData.report.points_data.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Reason</TableHead>
+                      <TableHead className="text-right">Points</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {detailData.report.points_data.map((point, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>
+                          {new Date(point.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>{point.reason}</TableCell>
+                        <TableCell className="text-right font-medium">+{point.amount}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow className="bg-muted/50">
+                      <TableCell colSpan={2} className="font-medium">Total</TableCell>
+                      <TableCell className="text-right font-bold">
+                        {detailData.report.points_data.reduce((sum, p) => sum + p.amount, 0)}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-muted-foreground text-center py-4">No points earned this month</p>
+              )
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={!!deleteReport} onOpenChange={(open) => !open && setDeleteReport(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Report</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the report for {deleteReport && MONTHS[deleteReport.month - 1]} {deleteReport?.year}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteReport(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteLoading}>
+              {deleteLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

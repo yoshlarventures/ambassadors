@@ -8,18 +8,48 @@ import { Badge } from "@/components/ui/badge";
 
 async function getRegionAmbassadors(regionId: string) {
   const supabase = await createClient();
+
+  // First get ambassadors in the region
   const { data: ambassadors, error } = await supabase
     .from("users")
-    .select("*, clubs:clubs!clubs_ambassador_id_fkey(id, name)")
+    .select("*")
     .eq("region_id", regionId)
     .eq("role", "ambassador")
     .order("full_name");
 
   if (error) {
     console.error("Error fetching ambassadors:", error);
+    return [];
   }
 
-  return ambassadors || [];
+  if (!ambassadors || ambassadors.length === 0) {
+    return [];
+  }
+
+  // Get clubs for each ambassador through club_ambassadors junction table
+  const ambassadorIds = ambassadors.map(a => a.id);
+  const { data: clubAmbassadors } = await supabase
+    .from("club_ambassadors")
+    .select("ambassador_id, clubs(id, name)")
+    .in("ambassador_id", ambassadorIds);
+
+  // Map clubs to ambassadors (multiple clubs per ambassador)
+  const clubMap = new Map<string, { id: string; name: string }[]>();
+  clubAmbassadors?.forEach((ca) => {
+    // clubs is a single object since club_ambassadors has FK to clubs
+    const club = ca.clubs as unknown as { id: string; name: string } | null;
+    if (club) {
+      const existing = clubMap.get(ca.ambassador_id) || [];
+      existing.push(club);
+      clubMap.set(ca.ambassador_id, existing);
+    }
+  });
+
+  // Attach clubs info to each ambassador
+  return ambassadors.map(ambassador => ({
+    ...ambassador,
+    clubs: clubMap.get(ambassador.id) || []
+  }));
 }
 
 export default async function LeadAmbassadorsPage() {
@@ -60,7 +90,7 @@ export default async function LeadAmbassadorsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Ambassador</TableHead>
-                <TableHead>Club</TableHead>
+                <TableHead>Clubs</TableHead>
                 <TableHead>Contact</TableHead>
                 <TableHead>Joined</TableHead>
               </TableRow>
@@ -74,7 +104,7 @@ export default async function LeadAmbassadorsPage() {
                   .toUpperCase()
                   .slice(0, 2);
 
-                const club = ambassador.clubs as { id: string; name: string } | null;
+                const clubs = ambassador.clubs as { id: string; name: string }[];
 
                 return (
                   <TableRow key={ambassador.id}>
@@ -88,8 +118,12 @@ export default async function LeadAmbassadorsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {club ? (
-                        <Badge variant="outline">{club.name}</Badge>
+                      {clubs.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {clubs.map((club) => (
+                            <Badge key={club.id} variant="outline">{club.name}</Badge>
+                          ))}
+                        </div>
                       ) : (
                         <span className="text-muted-foreground">No club</span>
                       )}

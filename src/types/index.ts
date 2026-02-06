@@ -145,6 +145,37 @@ export interface SessionAttendance {
   created_at: string;
 }
 
+// Snapshot types for static report data
+export interface SessionSnapshot {
+  id: string;
+  title: string;
+  session_date: string;
+  attendance_count: number;
+  attendance_rate: number | null;
+}
+
+export interface EventSnapshot {
+  id: string;
+  title: string;
+  event_date: string;
+  location: string;
+  confirmed_attendees: number | null;
+}
+
+export interface MemberSnapshot {
+  id: string;
+  user_name: string;
+  user_email: string;
+  joined_at: string | null;
+}
+
+export interface PointSnapshot {
+  id: string;
+  amount: number;
+  reason: string;
+  created_at: string;
+}
+
 export interface Report {
   id: string;
   ambassador_id: string;
@@ -157,6 +188,15 @@ export interface Report {
   events_attendance: number;
   new_members_count: number;
   points_earned: number;
+  attendance_rate: number | null;
+  session_ids: string[] | null;
+  event_ids: string[] | null;
+  member_ids: string[] | null;
+  point_ids: string[] | null;
+  sessions_data: SessionSnapshot[] | null;
+  events_data: EventSnapshot[] | null;
+  members_data: MemberSnapshot[] | null;
+  points_data: PointSnapshot[] | null;
   highlights: string | null;
   challenges: string | null;
   goals: string | null;
