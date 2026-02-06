@@ -8,12 +8,17 @@ import { Badge } from "@/components/ui/badge";
 
 async function getRegionAmbassadors(regionId: string) {
   const supabase = await createClient();
-  const { data: ambassadors } = await supabase
+  const { data: ambassadors, error } = await supabase
     .from("users")
-    .select("*, clubs(id, name)")
+    .select("*, clubs:clubs!clubs_ambassador_id_fkey(id, name)")
     .eq("region_id", regionId)
     .eq("role", "ambassador")
     .order("full_name");
+
+  if (error) {
+    console.error("Error fetching ambassadors:", error);
+  }
+
   return ambassadors || [];
 }
 
@@ -69,7 +74,7 @@ export default async function LeadAmbassadorsPage() {
                   .toUpperCase()
                   .slice(0, 2);
 
-                const club = ambassador.clubs as { id: string; name: string }[] | null;
+                const club = ambassador.clubs as { id: string; name: string } | null;
 
                 return (
                   <TableRow key={ambassador.id}>
@@ -83,8 +88,8 @@ export default async function LeadAmbassadorsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      {club && club.length > 0 ? (
-                        <Badge variant="outline">{club[0].name}</Badge>
+                      {club ? (
+                        <Badge variant="outline">{club.name}</Badge>
                       ) : (
                         <span className="text-muted-foreground">No club</span>
                       )}

@@ -10,7 +10,8 @@
       "Bash(npm run dev:*)",
       "Bash(npx supabase db push:*)",
       "Bash(timeout:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npx next dev -p 3020)"
     ]
   }
 }
