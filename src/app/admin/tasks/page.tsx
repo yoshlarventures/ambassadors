@@ -16,11 +16,16 @@ async function getTasks() {
 
 async function getPendingCompletions() {
   const supabase = await createClient();
-  const { data: completions } = await supabase
+  const { data: completions, error } = await supabase
     .from("task_completions")
-    .select("*, tasks(title, points), users(full_name, email)")
+    .select("*, tasks(title, points), users:users!task_completions_user_id_fkey(full_name, email)")
     .eq("status", "pending")
     .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching task completions:", error);
+  }
+
   return completions || [];
 }
 

@@ -18,6 +18,7 @@ const sidebarItems: SidebarItem[] = [
     ],
   },
   { title: "Tasks", href: "/lead/tasks", icon: "ListTodo" },
+  { title: "Leaderboard", href: "/lead/leaderboard", icon: "Trophy" },
   { title: "Resources", href: "/lead/resources", icon: "BookOpen" },
 ];
 
