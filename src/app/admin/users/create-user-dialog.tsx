@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { Loader2, UserPlus } from "lucide-react";
 import { ROLE_LABELS } from "@/lib/constants/permissions";
+import { PhoneInput } from "@/components/ui/phone-input";
 
 interface CreateUserDialogProps {
   regions: Region[];
@@ -175,12 +176,9 @@ export function CreateUserDialog({ regions }: CreateUserDialogProps) {
               <Label htmlFor="phone">
                 Phone Number <span className="text-destructive">*</span>
               </Label>
-              <Input
-                id="phone"
-                type="tel"
+              <PhoneInput
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="+998901234567"
+                onChange={setPhone}
                 disabled={loading}
               />
             </div>

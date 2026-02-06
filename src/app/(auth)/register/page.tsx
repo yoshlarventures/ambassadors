@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -8,18 +8,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { PhoneInput } from "@/components/ui/phone-input";
+import { Combobox } from "@/components/ui/combobox";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { Region } from "@/types";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [regionId, setRegionId] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [regions, setRegions] = useState<Region[]>([]);
+
+  useEffect(() => {
+    const fetchRegions = async () => {
+      const supabase = createClient();
+      const { data } = await supabase.from("regions").select("*").order("name");
+      if (data) setRegions(data);
+    };
+    fetchRegions();
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,6 +50,11 @@ export default function RegisterPage() {
 
     if (!phone.trim()) {
       toast.error("Phone number is required");
+      return;
+    }
+
+    if (!regionId) {
+      toast.error("Please select your region");
       return;
     }
 
@@ -62,6 +81,7 @@ export default function RegisterPage() {
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           phone: phone.trim(),
+          region_id: regionId,
         },
       },
     });
@@ -118,13 +138,25 @@ export default function RegisterPage() {
             <Label htmlFor="phone">
               Phone Number <span className="text-destructive">*</span>
             </Label>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="+998901234567"
+            <PhoneInput
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              required
+              onChange={setPhone}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="region">
+              Region <span className="text-destructive">*</span>
+            </Label>
+            <Combobox
+              options={regions.map((region) => ({
+                value: region.id,
+                label: region.name,
+              }))}
+              value={regionId}
+              onChange={setRegionId}
+              placeholder="Select your region"
+              searchPlaceholder="Type to search regions..."
+              emptyText="No region found."
             />
           </div>
           <div className="space-y-2">
