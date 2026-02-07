@@ -42,7 +42,6 @@ import {
   Minimize2,
   ExternalLink,
   Unlink,
-  Loader2,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarItem, IconName } from "./sidebar";

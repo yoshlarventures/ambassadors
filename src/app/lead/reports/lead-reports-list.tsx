@@ -19,7 +19,6 @@ import {
 import { toast } from "sonner";
 import {
   Calendar,
-  Users,
   UserPlus,
   FileText,
   Trophy,

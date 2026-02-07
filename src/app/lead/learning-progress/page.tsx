@@ -42,7 +42,7 @@ export default async function LearningProgressPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Learning Progress</h1>
-          <p className="text-muted-foreground">Track your ambassadors' course progress</p>
+          <p className="text-muted-foreground">Track your ambassadors&apos; course progress</p>
         </div>
         <Card>
           <CardContent className="py-8">
@@ -61,7 +61,7 @@ export default async function LearningProgressPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Learning Progress</h1>
-        <p className="text-muted-foreground">Track your ambassadors' course progress</p>
+        <p className="text-muted-foreground">Track your ambassadors&apos; course progress</p>
       </div>
 
       <Card>

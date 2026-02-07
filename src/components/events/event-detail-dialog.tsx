@@ -97,17 +97,36 @@ export function EventDetailDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <div className="flex items-center gap-2 flex-wrap">
-            <DialogTitle className="text-xl">{event.title}</DialogTitle>
-            <Badge variant={statusColors[event.status] as "default" | "secondary" | "destructive" | "outline"}>
-              {event.status.replace("_", " ")}
-            </Badge>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+        {/* Cover image hero */}
+        {event.cover_image_url ? (
+          <div className="relative h-48 w-full">
+            <img
+              src={event.cover_image_url}
+              alt={event.title}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4 pt-12">
+              <div className="flex items-center gap-2 flex-wrap">
+                <DialogTitle className="text-xl text-foreground">{event.title}</DialogTitle>
+                <Badge variant={statusColors[event.status] as "default" | "secondary" | "destructive" | "outline"}>
+                  {event.status.replace("_", " ")}
+                </Badge>
+              </div>
+            </div>
           </div>
-        </DialogHeader>
+        ) : (
+          <DialogHeader className="px-6 pt-6">
+            <div className="flex items-center gap-2 flex-wrap">
+              <DialogTitle className="text-xl">{event.title}</DialogTitle>
+              <Badge variant={statusColors[event.status] as "default" | "secondary" | "destructive" | "outline"}>
+                {event.status.replace("_", " ")}
+              </Badge>
+            </div>
+          </DialogHeader>
+        )}
 
-        <div className="space-y-6">
+        <div className="space-y-6 px-6 pb-6">
           {/* Event Details */}
           <div className="space-y-3">
             {event.description && (
@@ -198,12 +217,12 @@ export function EventDetailDialog({
                 Photos ({photoCount})
               </h4>
               <div className="grid grid-cols-3 gap-2">
-                {event.event_photos?.slice(0, 6).map((photo) => (
+                {event.event_photos?.slice(0, 9).map((photo) => (
                   <img
                     key={photo.id}
                     src={photo.image_url}
                     alt="Event photo"
-                    className="w-full h-24 object-cover rounded-lg"
+                    className="w-full h-28 object-cover rounded-lg"
                   />
                 ))}
               </div>

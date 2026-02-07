@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -12,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Calendar, Clock, MapPin, Users, Image as ImageIcon, Eye } from "lucide-react";
+import { Calendar, Clock, MapPin, Users, Image as ImageIcon } from "lucide-react";
 import { Event, Region, User } from "@/types";
 import { EventDetailDialog } from "./event-detail-dialog";
 
@@ -45,62 +44,70 @@ function EventCard({
     .map((c) => c.user!.full_name) || [];
 
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <div className="flex items-start justify-between gap-2">
-          <CardTitle className="text-lg">{event.title}</CardTitle>
+    <Card className="flex flex-col overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={onView}>
+      {/* Cover image or gradient placeholder */}
+      <div className="relative h-36">
+        {event.cover_image_url ? (
+          <img
+            src={event.cover_image_url}
+            alt={event.title}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5" />
+        )}
+        <div className="absolute top-2 right-2">
           <Badge>{event.regions?.name}</Badge>
         </div>
-        <CardDescription>
+        {isPast && event.status === "completed" && (
+          <div className="absolute top-2 left-2">
+            <Badge variant="secondary">Completed</Badge>
+          </div>
+        )}
+      </div>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg line-clamp-1">{event.title}</CardTitle>
+        <CardDescription className="text-xs">
           By {event.organizer?.full_name}
           {collaborators.length > 0 && ` & ${collaborators.join(", ")}`}
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 space-y-4">
-        {event.description && (
-          <p className="text-sm text-muted-foreground line-clamp-3">
-            {event.description}
-          </p>
-        )}
-        <div className="space-y-2 text-sm">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-            <span>{new Date(event.event_date).toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>
-              {event.start_time.slice(0, 5)}
-              {event.end_time && ` - ${event.end_time.slice(0, 5)}`}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            <span>{event.location}</span>
-          </div>
+      <CardContent className="flex-1 space-y-3 pt-0">
+        <div className="flex flex-wrap gap-1.5">
+          <Badge variant="outline" className="text-xs font-normal">
+            <Calendar className="h-3 w-3 mr-1" />
+            {new Date(event.event_date).toLocaleDateString()}
+          </Badge>
+          <Badge variant="outline" className="text-xs font-normal">
+            <Clock className="h-3 w-3 mr-1" />
+            {event.start_time.slice(0, 5)}
+            {event.end_time && `-${event.end_time.slice(0, 5)}`}
+          </Badge>
+          <Badge variant="outline" className="text-xs font-normal">
+            <MapPin className="h-3 w-3 mr-1" />
+            {event.location}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
           {event.max_attendees && !isPast && (
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span>Max {event.max_attendees} attendees</span>
-            </div>
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              Max {event.max_attendees}
+            </span>
           )}
           {isPast && event.confirmed_attendees && (
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span>{event.confirmed_attendees} attended</span>
-            </div>
+            <span className="flex items-center gap-1">
+              <Users className="h-3 w-3" />
+              {event.confirmed_attendees} attended
+            </span>
           )}
           {isPast && photoCount > 0 && (
-            <div className="flex items-center gap-2">
-              <ImageIcon className="h-4 w-4 text-muted-foreground" />
-              <span>{photoCount} photo{photoCount !== 1 ? "s" : ""}</span>
-            </div>
+            <span className="flex items-center gap-1">
+              <ImageIcon className="h-3 w-3" />
+              {photoCount} photo{photoCount !== 1 ? "s" : ""}
+            </span>
           )}
         </div>
-        <Button variant="outline" size="sm" className="w-full mt-2" onClick={onView}>
-          <Eye className="h-4 w-4 mr-2" />
-          View Details
-        </Button>
       </CardContent>
     </Card>
   );

@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserActions } from "./user-actions";
+import { UserProfileDialog } from "./user-profile-dialog";
 import { ROLE_LABELS } from "@/lib/constants/permissions";
 import { Search } from "lucide-react";
 import { Region, UserRole, User } from "@/types";
@@ -32,6 +33,7 @@ export function UsersList({ users, regions }: UsersListProps) {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
   const [regionFilter, setRegionFilter] = useState<string>("all");
+  const [selectedUser, setSelectedUser] = useState<UserWithRegion | null>(null);
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -124,7 +126,7 @@ export function UsersList({ users, regions }: UsersListProps) {
               .slice(0, 2);
 
             return (
-              <TableRow key={user.id}>
+              <TableRow key={user.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedUser(user)}>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     <Avatar className="h-8 w-8">
@@ -148,7 +150,7 @@ export function UsersList({ users, regions }: UsersListProps) {
                 <TableCell>
                   {new Date(user.created_at).toLocaleDateString()}
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(e) => e.stopPropagation()}>
                   <UserActions user={user} regions={regions} />
                 </TableCell>
               </TableRow>
@@ -163,6 +165,14 @@ export function UsersList({ users, regions }: UsersListProps) {
           )}
         </TableBody>
       </Table>
+
+      {selectedUser && (
+        <UserProfileDialog
+          user={selectedUser}
+          open={!!selectedUser}
+          onOpenChange={(open) => !open && setSelectedUser(null)}
+        />
+      )}
     </div>
   );
 }

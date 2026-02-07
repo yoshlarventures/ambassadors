@@ -30,7 +30,7 @@ async function getLeads(): Promise<User[]> {
     .order("full_name");
 
   return (data || []).map((user) => {
-    const region = user.regions as { name: string } | null;
+    const region = user.regions as unknown as { name: string } | null;
     return {
       ...user,
       region_name: region?.name || null,

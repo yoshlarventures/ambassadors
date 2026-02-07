@@ -6,7 +6,7 @@ import { Task, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Calendar, Trophy, ToggleLeft, ToggleRight, Trash } from "lucide-react";
+import { Calendar, Trophy, ToggleLeft, ToggleRight, Trash, Repeat } from "lucide-react";
 
 type TaskWithCreator = Task & {
   creator: Pick<User, "full_name"> | null;
@@ -66,6 +66,12 @@ export function TasksList({ tasks }: TasksListProps) {
                 <Trophy className="mr-1 h-3 w-3" />
                 {task.points} pts
               </Badge>
+              {task.max_completions > 1 && (
+                <Badge variant="outline">
+                  <Repeat className="mr-1 h-3 w-3" />
+                  {task.max_completions}x
+                </Badge>
+              )}
               {!task.is_active && (
                 <Badge variant="outline">Inactive</Badge>
               )}

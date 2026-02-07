@@ -147,17 +147,31 @@ export function OrganizerEventsSection(props: OrganizerEventsSectionProps) {
     return false;
   };
 
-  // Filter events into categories
-  const pending = events.filter((e) => e.status === "pending_approval");
-  const approved = events.filter(
-    (e) => e.status === "approved" && !hasEventStarted(e)
-  );
-  const needsConfirmation = events.filter(
-    (e) => e.status === "approved" && hasEventStarted(e)
-  );
+  // Filter events into 3 consolidated groups
+  // Active = Pending + Approved (not started + needs confirmation)
+  const activeEvents = events
+    .filter((e) =>
+      e.status === "pending_approval" ||
+      (e.status === "approved")
+    )
+    .sort((a, b) => {
+      // Sort: needs confirmation first, then by date
+      const aStarted = hasEventStarted(a);
+      const bStarted = hasEventStarted(b);
+      if (aStarted && !bStarted) return -1;
+      if (!aStarted && bStarted) return 1;
+      // Then pending before approved
+      if (a.status === "pending_approval" && b.status !== "pending_approval") return -1;
+      if (a.status !== "pending_approval" && b.status === "pending_approval") return 1;
+      return a.event_date.localeCompare(b.event_date);
+    });
+
   const completed = events.filter((e) => e.status === "completed");
-  const rejected = events.filter((e) => e.status === "rejected");
-  const cancelled = events.filter((e) => e.status === "cancelled");
+
+  // Archived = Rejected + Cancelled
+  const archived = events.filter(
+    (e) => e.status === "rejected" || e.status === "cancelled"
+  );
 
   const handleConfirmComplete = () => {
     setConfirmEvent(null);
@@ -167,77 +181,35 @@ export function OrganizerEventsSection(props: OrganizerEventsSectionProps) {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">{title}</h2>
-      <Tabs defaultValue="pending" className="space-y-4">
-        <TabsList className="flex-wrap">
-          <TabsTrigger value="pending">Pending ({pending.length})</TabsTrigger>
-          <TabsTrigger value="approved">Approved ({approved.length})</TabsTrigger>
-          <TabsTrigger value="needs-confirmation">
-            Needs Confirmation ({needsConfirmation.length})
-          </TabsTrigger>
+      <Tabs defaultValue="active" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="active">Active ({activeEvents.length})</TabsTrigger>
           <TabsTrigger value="completed">Completed ({completed.length})</TabsTrigger>
-          <TabsTrigger value="rejected">Rejected ({rejected.length})</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelled ({cancelled.length})</TabsTrigger>
+          <TabsTrigger value="archived">Archived ({archived.length})</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="pending">
+        <TabsContent value="active">
           <Card>
             <CardHeader>
-              <CardTitle>Pending Approval</CardTitle>
+              <CardTitle>Active Events</CardTitle>
             </CardHeader>
             <CardContent>
-              {pending.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No pending events</p>
+              {activeEvents.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No active events</p>
               ) : (
                 <div className="space-y-4">
-                  {pending.map((event) => (
-                    <EventItem key={event.id} event={event} onView={() => setViewEvent(event)} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="approved">
-          <Card>
-            <CardHeader>
-              <CardTitle>Approved Events</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {approved.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No approved events</p>
-              ) : (
-                <div className="space-y-4">
-                  {approved.map((event) => (
-                    <EventItem key={event.id} event={event} onView={() => setViewEvent(event)} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="needs-confirmation">
-          <Card>
-            <CardHeader>
-              <CardTitle>Events Needing Confirmation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {needsConfirmation.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No events need confirmation
-                </p>
-              ) : (
-                <div className="space-y-4">
-                  {needsConfirmation.map((event) => (
-                    <EventItem
-                      key={event.id}
-                      event={event}
-                      showConfirm
-                      onConfirm={() => setConfirmEvent(event)}
-                      onView={() => setViewEvent(event)}
-                    />
-                  ))}
+                  {activeEvents.map((event) => {
+                    const needsConfirm = event.status === "approved" && hasEventStarted(event);
+                    return (
+                      <EventItem
+                        key={event.id}
+                        event={event}
+                        showConfirm={needsConfirm}
+                        onConfirm={needsConfirm ? () => setConfirmEvent(event) : undefined}
+                        onView={() => setViewEvent(event)}
+                      />
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -263,37 +235,24 @@ export function OrganizerEventsSection(props: OrganizerEventsSectionProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="rejected">
+        <TabsContent value="archived">
           <Card>
             <CardHeader>
-              <CardTitle>Rejected Events</CardTitle>
+              <CardTitle>Archived Events</CardTitle>
             </CardHeader>
             <CardContent>
-              {rejected.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No rejected events</p>
+              {archived.length === 0 ? (
+                <p className="text-muted-foreground text-center py-8">No archived events</p>
               ) : (
                 <div className="space-y-4">
-                  {rejected.map((event) => (
-                    <EventItem key={event.id} event={event} showRejectionReason onView={() => setViewEvent(event)} />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="cancelled">
-          <Card>
-            <CardHeader>
-              <CardTitle>Cancelled Events</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {cancelled.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No cancelled events</p>
-              ) : (
-                <div className="space-y-4">
-                  {cancelled.map((event) => (
-                    <EventItem key={event.id} event={event} showCancellationReason onView={() => setViewEvent(event)} />
+                  {archived.map((event) => (
+                    <EventItem
+                      key={event.id}
+                      event={event}
+                      showRejectionReason={event.status === "rejected"}
+                      showCancellationReason={event.status === "cancelled"}
+                      onView={() => setViewEvent(event)}
+                    />
                   ))}
                 </div>
               )}

@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ImagePlus, X } from "lucide-react";
 
 interface EditEventDialogProps {
   event: Event & { regions?: Pick<Region, "name"> | null };
@@ -52,6 +52,8 @@ export function EditEventDialog({
   const [maxAttendees, setMaxAttendees] = useState(
     event.max_attendees?.toString() || ""
   );
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(event.cover_image_url);
 
   // Reset form when event changes
   useEffect(() => {
@@ -63,6 +65,8 @@ export function EditEventDialog({
     setEndTime(event.end_time?.slice(0, 5) || "");
     setLocation(event.location);
     setMaxAttendees(event.max_attendees?.toString() || "");
+    setCoverImage(null);
+    setCoverPreview(event.cover_image_url);
   }, [event]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -101,6 +105,19 @@ export function EditEventDialog({
       toast.error(error.message);
       setLoading(false);
       return;
+    }
+
+    // Upload cover image if changed
+    if (coverImage) {
+      const ext = coverImage.name.split(".").pop();
+      const path = `covers/${event.id}.${ext}`;
+      await supabase.storage.from("event-photos").upload(path, coverImage, { upsert: true });
+      const { data: urlData } = supabase.storage.from("event-photos").getPublicUrl(path);
+      await supabase.from("events").update({ cover_image_url: urlData.publicUrl }).eq("id", event.id);
+      changes.cover_image = { from: event.cover_image_url, to: urlData.publicUrl };
+    } else if (coverPreview === null && event.cover_image_url) {
+      await supabase.from("events").update({ cover_image_url: null }).eq("id", event.id);
+      changes.cover_image = { from: event.cover_image_url, to: null };
     }
 
     // Log the edit action with full details
@@ -143,6 +160,39 @@ export function EditEventDialog({
                 placeholder="e.g., Startup Pitch Night"
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Cover Image</Label>
+              {coverPreview ? (
+                <div className="relative">
+                  <img src={coverPreview} alt="Cover preview" className="w-full h-32 object-cover rounded-lg" />
+                  <button
+                    type="button"
+                    onClick={() => { setCoverImage(null); setCoverPreview(null); }}
+                    className="absolute top-1 right-1 bg-background/80 rounded-full p-1 hover:bg-background"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center gap-2 h-24 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                  <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Upload cover image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setCoverImage(file);
+                        setCoverPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+                </label>
+              )}
             </div>
 
             <div className="space-y-2">

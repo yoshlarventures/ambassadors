@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
+import { GraduationCap, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 export function SyncExodePointsButton() {

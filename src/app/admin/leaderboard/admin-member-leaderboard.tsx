@@ -17,7 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Trophy, Medal, Calendar, Users, CheckCircle, FileText, Gift } from "lucide-react";
+import { Trophy, Medal, Calendar, CheckCircle, Gift } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface MemberEntry {

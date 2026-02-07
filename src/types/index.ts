@@ -77,6 +77,7 @@ export interface Event {
   id: string;
   title: string;
   description: string | null;
+  cover_image_url: string | null;
   organizer_id: string;
   region_id: string;
   club_id: string | null;
@@ -247,6 +248,7 @@ export interface Task {
   description: string | null;
   points: number;
   deadline: string | null;
+  max_completions: number;
   is_active: boolean;
   created_by: string;
   created_at: string;

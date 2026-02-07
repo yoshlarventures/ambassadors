@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Plus, Loader2, X } from "lucide-react";
+import { Plus, Loader2, X, ImagePlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface CreateEventDialogProps {
@@ -55,6 +55,8 @@ export function CreateEventDialog({
   const [endTime, setEndTime] = useState("");
   const [location, setLocation] = useState("");
   const [maxAttendees, setMaxAttendees] = useState("");
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [collaborators, setCollaborators] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,6 +87,26 @@ export function CreateEventDialog({
       toast.error(error.message);
       setLoading(false);
       return;
+    }
+
+    // Upload cover image if provided
+    if (coverImage) {
+      const ext = coverImage.name.split(".").pop();
+      const path = `covers/${event.id}.${ext}`;
+      const { error: uploadError } = await supabase.storage
+        .from("event-photos")
+        .upload(path, coverImage);
+
+      if (!uploadError) {
+        const { data: urlData } = supabase.storage
+          .from("event-photos")
+          .getPublicUrl(path);
+
+        await supabase
+          .from("events")
+          .update({ cover_image_url: urlData.publicUrl })
+          .eq("id", event.id);
+      }
     }
 
     // Add collaborators
@@ -137,6 +159,8 @@ export function CreateEventDialog({
     setEndTime("");
     setLocation("");
     setMaxAttendees("");
+    setCoverImage(null);
+    setCoverPreview(null);
     setCollaborators([]);
   };
 
@@ -178,6 +202,39 @@ export function CreateEventDialog({
                 placeholder="e.g., Startup Pitch Night"
                 required
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Cover Image (optional)</Label>
+              {coverPreview ? (
+                <div className="relative">
+                  <img src={coverPreview} alt="Cover preview" className="w-full h-32 object-cover rounded-lg" />
+                  <button
+                    type="button"
+                    onClick={() => { setCoverImage(null); setCoverPreview(null); }}
+                    className="absolute top-1 right-1 bg-background/80 rounded-full p-1 hover:bg-background"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex items-center justify-center gap-2 h-24 border-2 border-dashed rounded-lg cursor-pointer hover:border-primary/50 transition-colors">
+                  <ImagePlus className="h-5 w-5 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Upload cover image</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setCoverImage(file);
+                        setCoverPreview(URL.createObjectURL(file));
+                      }
+                    }}
+                  />
+                </label>
+              )}
             </div>
 
             <div className="space-y-2">

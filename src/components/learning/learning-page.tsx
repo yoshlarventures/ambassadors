@@ -32,7 +32,8 @@ export function LearningPage({ user }: LearningPageProps) {
   const [authStatus, setAuthStatus] = useState<AuthStatus>("idle");
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [isUnlinking, setIsUnlinking] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_isUnlinking, setIsUnlinking] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [iframeLoading, setIframeLoading] = useState(true);
   const iframeRef = useRef<HTMLIFrameElement>(null);

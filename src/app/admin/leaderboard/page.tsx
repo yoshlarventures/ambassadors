@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trophy, Crown, Users, UserCircle } from "lucide-react";
+import { Crown, Users, UserCircle } from "lucide-react";
 import { AdminLeaderboardTable } from "./admin-leaderboard-table";
 import { AdminMemberLeaderboard } from "./admin-member-leaderboard";
 
@@ -55,7 +55,7 @@ async function getLeadsLeaderboard(): Promise<LeaderboardEntry[]> {
   });
 
   const leaderboard: LeaderboardEntry[] = users.map((user) => {
-    const region = user.regions as { name: string } | null;
+    const region = user.regions as unknown as { name: string } | null;
     return {
       user_id: user.id,
       total_points: pointsMap[user.id] || 0,
@@ -90,7 +90,7 @@ async function getAmbassadorsLeaderboard(): Promise<LeaderboardEntry[]> {
   });
 
   const leaderboard: LeaderboardEntry[] = users.map((user) => {
-    const region = user.regions as { name: string } | null;
+    const region = user.regions as unknown as { name: string } | null;
     return {
       user_id: user.id,
       total_points: pointsMap[user.id] || 0,
@@ -156,7 +156,7 @@ async function getMembersLeaderboard(): Promise<MemberEntry[]> {
   });
 
   const leaderboard: MemberEntry[] = users.map((user) => {
-    const region = user.regions as { name: string } | null;
+    const region = user.regions as unknown as { name: string } | null;
     const membership = membershipMap[user.id];
     return {
       user_id: user.id,

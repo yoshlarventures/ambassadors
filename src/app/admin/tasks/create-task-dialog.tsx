@@ -26,6 +26,7 @@ export function CreateTaskDialog() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [points, setPoints] = useState("");
+  const [maxCompletions, setMaxCompletions] = useState("1");
   const [deadline, setDeadline] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,6 +47,7 @@ export function CreateTaskDialog() {
       title,
       description: description || null,
       points: parseInt(points),
+      max_completions: parseInt(maxCompletions) || 1,
       deadline: deadline || null,
       created_by: user.id,
     });
@@ -66,6 +68,7 @@ export function CreateTaskDialog() {
     setTitle("");
     setDescription("");
     setPoints("");
+    setMaxCompletions("1");
     setDeadline("");
   };
 
@@ -117,6 +120,20 @@ export function CreateTaskDialog() {
                 min="1"
                 required
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="maxCompletions">Max Completions per User</Label>
+              <Input
+                id="maxCompletions"
+                type="number"
+                value={maxCompletions}
+                onChange={(e) => setMaxCompletions(e.target.value)}
+                placeholder="1"
+                min="1"
+              />
+              <p className="text-xs text-muted-foreground">
+                How many times each user can complete this task (default: 1)
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="deadline">Deadline (optional)</Label>

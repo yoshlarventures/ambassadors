@@ -52,7 +52,7 @@ async function getLeadsLeaderboard(): Promise<LeaderboardEntry[]> {
 
   return users
     .map((user) => {
-      const region = user.regions as { name: string } | null;
+      const region = user.regions as unknown as { name: string } | null;
       return {
         user_id: user.id,
         total_points: pointsMap[user.id] || 0,
@@ -88,7 +88,7 @@ async function getAllAmbassadors(): Promise<LeaderboardEntry[]> {
 
   return users
     .map((user) => {
-      const region = user.regions as { name: string } | null;
+      const region = user.regions as unknown as { name: string } | null;
       return {
         user_id: user.id,
         total_points: pointsMap[user.id] || 0,
@@ -143,7 +143,7 @@ async function getAllMembers(): Promise<LeaderboardEntry[]> {
 
   return users
     .map((user) => {
-      const region = user.regions as { name: string } | null;
+      const region = user.regions as unknown as { name: string } | null;
       const membership = membershipMap[user.id];
       return {
         user_id: user.id,
@@ -224,7 +224,7 @@ export default async function LeadLeaderboardPage() {
     redirect("/");
   }
 
-  const regionName = (user.regions as { name: string } | null)?.name || "My Region";
+  const regionName = (user.regions as unknown as { name: string } | null)?.name || "My Region";
 
   const [leadsLeaderboard, allAmbassadors, allMembers, clubFilterOptions, userPoints] =
     await Promise.all([
