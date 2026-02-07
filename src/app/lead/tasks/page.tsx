@@ -49,11 +49,16 @@ export default async function LeadTasksPage() {
     getUserCompletions(user.id),
   ]);
 
-  const completedTaskIds = completions.map(c => c.task_id);
-  const availableTasks = tasks.filter(t => !completedTaskIds.includes(t.id));
   const pendingCompletions = completions.filter(c => c.status === "pending");
   const approvedCompletions = completions.filter(c => c.status === "approved");
   const rejectedCompletions = completions.filter(c => c.status === "rejected");
+
+  // A task is available if: approved count < max_completions AND no pending submission
+  const availableTasks = tasks.filter(t => {
+    const approvedCount = approvedCompletions.filter(c => c.task_id === t.id).length;
+    const hasPending = pendingCompletions.some(c => c.task_id === t.id);
+    return approvedCount < (t.max_completions ?? 1) && !hasPending;
+  });
 
   return (
     <div className="space-y-6">
@@ -76,7 +81,9 @@ export default async function LeadTasksPage() {
               <CardTitle>Available Tasks</CardTitle>
             </CardHeader>
             <CardContent>
-              <LeadTasksList tasks={availableTasks} userId={user.id} />
+              <LeadTasksList tasks={availableTasks} userId={user.id} approvedCounts={
+                Object.fromEntries(availableTasks.map(t => [t.id, approvedCompletions.filter(c => c.task_id === t.id).length]))
+              } />
             </CardContent>
           </Card>
         </TabsContent>

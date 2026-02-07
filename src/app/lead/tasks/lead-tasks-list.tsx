@@ -18,7 +18,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Trophy, Calendar, Loader2, Check, X, Clock, RefreshCw } from "lucide-react";
+import { Trophy, Calendar, Loader2, Check, X, Clock, RefreshCw, Repeat } from "lucide-react";
 
 type TaskWithCreator = Task & {
   creator?: { full_name: string } | null;
@@ -32,12 +32,14 @@ interface LeadTasksListProps {
   tasks?: TaskWithCreator[];
   userId?: string;
   completions?: CompletionWithTask[];
+  approvedCounts?: Record<string, number>;
 }
 
 export function LeadTasksList({
   tasks,
   userId,
   completions,
+  approvedCounts = {},
 }: LeadTasksListProps) {
   const router = useRouter();
   const [submitTask, setSubmitTask] = useState<Task | null>(null);
@@ -59,11 +61,7 @@ export function LeadTasksList({
     });
 
     if (error) {
-      if (error.code === "23505") {
-        toast.error("You have already submitted this task");
-      } else {
-        toast.error(error.message);
-      }
+      toast.error(error.message);
     } else {
       toast.success("Task submitted for review!");
       setSubmitTask(null);
@@ -225,12 +223,18 @@ export function LeadTasksList({
             className="flex items-start justify-between p-4 border rounded-lg gap-4"
           >
             <div className="space-y-2">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="font-medium">{task.title}</h3>
                 <Badge variant="secondary">
                   <Trophy className="mr-1 h-3 w-3" />
                   {task.points} pts
                 </Badge>
+                {(task.max_completions ?? 1) > 1 && (
+                  <Badge variant="outline">
+                    <Repeat className="mr-1 h-3 w-3" />
+                    {approvedCounts[task.id] || 0}/{task.max_completions}
+                  </Badge>
+                )}
               </div>
               {task.description && (
                 <p className="text-sm text-muted-foreground">{task.description}</p>
