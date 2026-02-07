@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Image from "next/image";
 import { Calendar, Clock, MapPin, Users, Image as ImageIcon } from "lucide-react";
 import { Event, Region, User } from "@/types";
 import { EventDetailDialog } from "./event-detail-dialog";
@@ -48,10 +49,12 @@ function EventCard({
       {/* Cover image or gradient placeholder */}
       <div className="relative h-36">
         {event.cover_image_url ? (
-          <img
+          <Image
             src={event.cover_image_url}
             alt={event.title}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5" />

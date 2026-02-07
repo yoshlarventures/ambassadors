@@ -23,7 +23,7 @@ async function getAmbassadorClubs(ambassadorId: string) {
 
 async function getRegions() {
   const supabase = await createClient();
-  const { data: regions } = await supabase.from("regions").select("*").order("name");
+  const { data: regions } = await supabase.from("regions").select("id, name, name_uz, created_at").order("name");
   return regions || [];
 }
 

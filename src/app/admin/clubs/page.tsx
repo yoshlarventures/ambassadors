@@ -28,7 +28,7 @@ async function getRegions() {
   const supabase = await createClient();
   const { data: regions } = await supabase
     .from("regions")
-    .select("*")
+    .select("id, name, name_uz, created_at")
     .order("name");
   return (regions || []) as Region[];
 }

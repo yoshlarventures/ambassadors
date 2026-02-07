@@ -7,6 +7,7 @@ import { ClubMember, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import Image from "next/image";
 import { Check, X, UserMinus, Eye, Undo2 } from "lucide-react";
 import { ApproveMemberDialog } from "./approve-member-dialog";
 import {
@@ -240,12 +241,15 @@ export function MembersList({ members, clubId, currentUserId, showActions, showR
               {viewingMember.approval_screenshot_url && (
                 <div>
                   <div className="text-sm font-medium mb-2">Approval Screenshot</div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={viewingMember.approval_screenshot_url}
-                    alt="Approval screenshot"
-                    className="w-full max-h-64 object-contain rounded-lg border"
-                  />
+                  <div className="relative w-full h-64">
+                    <Image
+                      src={viewingMember.approval_screenshot_url}
+                      alt="Approval screenshot"
+                      fill
+                      className="object-contain rounded-lg border"
+                      sizes="500px"
+                    />
+                  </div>
                 </div>
               )}
             </div>

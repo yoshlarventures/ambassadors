@@ -21,7 +21,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [regions, setRegions] = useState<Region[]>([]);
+  const [regions, setRegions] = useState<Pick<Region, "id" | "name">[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
@@ -50,7 +50,7 @@ export default function ProfilePage() {
 
       const [userResult, regionsResult] = await Promise.all([
         supabase.from("users").select("*").eq("id", authUser.id).single(),
-        supabase.from("regions").select("*").order("name"),
+        supabase.from("regions").select("id, name").order("name"),
       ]);
 
       if (userResult.data) {

@@ -33,7 +33,7 @@ async function getRegion(regionId: string) {
   const supabase = await createClient();
   const { data: region } = await supabase
     .from("regions")
-    .select("*")
+    .select("id, name, name_uz, created_at")
     .eq("id", regionId)
     .single();
   return region as Region | null;

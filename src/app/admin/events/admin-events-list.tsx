@@ -18,9 +18,10 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Calendar, Clock, MapPin, Users, Check, X, Trash, AlertCircle, Loader2, Image as ImageIcon, Eye, Ban, Pencil } from "lucide-react";
-import { EventDetailDialog } from "@/components/events/event-detail-dialog";
-import { CancelEventDialog } from "@/components/events/cancel-event-dialog";
-import { EditEventDialog } from "@/components/events/edit-event-dialog";
+import dynamic from "next/dynamic";
+const EventDetailDialog = dynamic(() => import("@/components/events/event-detail-dialog").then(m => ({ default: m.EventDetailDialog })), { ssr: false });
+const CancelEventDialog = dynamic(() => import("@/components/events/cancel-event-dialog").then(m => ({ default: m.CancelEventDialog })), { ssr: false });
+const EditEventDialog = dynamic(() => import("@/components/events/edit-event-dialog").then(m => ({ default: m.EditEventDialog })), { ssr: false });
 
 type EventWithRelations = Event & {
   regions: Pick<Region, "name"> | null;

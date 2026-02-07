@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import Image from "next/image";
 import {
   Calendar,
   Clock,
@@ -101,10 +102,12 @@ export function EventDetailDialog({
         {/* Cover image hero */}
         {event.cover_image_url ? (
           <div className="relative h-48 w-full">
-            <img
+            <Image
               src={event.cover_image_url}
               alt={event.title}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="(max-width: 672px) 100vw, 672px"
             />
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/90 to-transparent p-4 pt-12">
               <div className="flex items-center gap-2 flex-wrap">
@@ -218,12 +221,15 @@ export function EventDetailDialog({
               </h4>
               <div className="grid grid-cols-3 gap-2">
                 {event.event_photos?.slice(0, 9).map((photo) => (
-                  <img
-                    key={photo.id}
-                    src={photo.image_url}
-                    alt="Event photo"
-                    className="w-full h-28 object-cover rounded-lg"
-                  />
+                  <div key={photo.id} className="relative h-28 rounded-lg overflow-hidden">
+                    <Image
+                      src={photo.image_url}
+                      alt="Event photo"
+                      fill
+                      className="object-cover"
+                      sizes="200px"
+                    />
+                  </div>
                 ))}
               </div>
             </div>

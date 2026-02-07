@@ -15,7 +15,7 @@ async function getCategories() {
   const supabase = await createClient();
   const { data: categories } = await supabase
     .from("resource_categories")
-    .select("*")
+    .select("id, name, description")
     .order("name");
   return categories || [];
 }

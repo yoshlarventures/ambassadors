@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Calendar, Clock, MapPin, Users, Check, X } from "lucide-react";
 import { Loader2 } from "lucide-react";
@@ -199,12 +200,13 @@ export function ViewSessionDialog(props: ViewSessionDialogProps) {
               ) : (
                 <div className="grid grid-cols-3 gap-2">
                   {photos.map((photo) => (
-                    <div key={photo.id} className="aspect-square rounded-lg overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                    <div key={photo.id} className="relative aspect-square rounded-lg overflow-hidden">
+                      <Image
                         src={photo.image_url}
                         alt={photo.caption || "Session photo"}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="150px"
                       />
                     </div>
                   ))}

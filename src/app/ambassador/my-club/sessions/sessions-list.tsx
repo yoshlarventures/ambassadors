@@ -16,9 +16,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Calendar, Clock, MapPin, Check, Pencil, Trash2, Users, Eye } from "lucide-react";
-import { ConfirmSessionDialog } from "./confirm-session-dialog";
-import { EditSessionDialog } from "./edit-session-dialog";
-import { ViewSessionDialog } from "./view-session-dialog";
+import dynamic from "next/dynamic";
+const ConfirmSessionDialog = dynamic(() => import("./confirm-session-dialog").then(m => ({ default: m.ConfirmSessionDialog })), { ssr: false });
+const EditSessionDialog = dynamic(() => import("./edit-session-dialog").then(m => ({ default: m.EditSessionDialog })), { ssr: false });
+const ViewSessionDialog = dynamic(() => import("./view-session-dialog").then(m => ({ default: m.ViewSessionDialog })), { ssr: false });
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 

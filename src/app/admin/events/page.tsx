@@ -114,7 +114,7 @@ async function getAllEventsForApproval() {
 
 async function getRegions() {
   const supabase = await createClient();
-  const { data } = await supabase.from("regions").select("*").order("name");
+  const { data } = await supabase.from("regions").select("id, name, name_uz, created_at").order("name");
   return data || [];
 }
 

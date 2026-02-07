@@ -1,8 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
-import { LearningControlsProvider } from "@/components/learning/learning-controls-context";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -16,8 +15,24 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Startup Ambassadors",
+  title: {
+    default: "Startup Ambassadors",
+    template: "%s | Startup Ambassadors",
+  },
   description: "Track progress of startup ambassadors across Uzbekistan",
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "white" },
+    { media: "(prefers-color-scheme: dark)", color: "black" },
+  ],
 };
 
 export default function RootLayout({
@@ -30,9 +45,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <LearningControlsProvider>
-          {children}
-        </LearningControlsProvider>
+        {children}
         <Toaster />
       </body>
     </html>

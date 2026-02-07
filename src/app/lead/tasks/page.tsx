@@ -22,7 +22,7 @@ async function getActiveTasks() {
   const supabase = await createClient();
   const { data: tasks } = await supabase
     .from("tasks")
-    .select("*")
+    .select("id, title, description, points, is_active, max_completions, target_roles, deadline, created_by, created_at, updated_at")
     .eq("is_active", true)
     .order("created_at", { ascending: false });
   return tasks || [];

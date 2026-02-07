@@ -5,8 +5,9 @@ import { Event, User, Region } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, Users, AlertCircle, Image as ImageIcon, Eye } from "lucide-react";
-import { ConfirmEventDialog } from "./confirm-event-dialog";
-import { EventDetailDialog } from "./event-detail-dialog";
+import dynamic from "next/dynamic";
+const ConfirmEventDialog = dynamic(() => import("./confirm-event-dialog").then(m => ({ default: m.ConfirmEventDialog })), { ssr: false });
+const EventDetailDialog = dynamic(() => import("./event-detail-dialog").then(m => ({ default: m.EventDetailDialog })), { ssr: false });
 
 type EventWithRelations = Event & {
   regions: Pick<Region, "name"> | null;

@@ -10,7 +10,6 @@ const authRoutes = ["/login", "/register", "/forgot-password"];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public routes
   const isPublicRoute = publicRoutes.some(
     (route) => pathname === route || pathname.startsWith(route + "/")
   );
@@ -19,27 +18,7 @@ export async function middleware(request: NextRequest) {
   // Update session and get user
   const { supabaseResponse, user, supabase } = await updateSession(request);
 
-  // If user is logged in and trying to access auth pages, redirect to dashboard
-  if (user && isAuthRoute) {
-    // Get user's role to redirect to appropriate dashboard
-    const { data: userData } = await supabase
-      .from("users")
-      .select("role")
-      .eq("id", user.id)
-      .single();
-
-    const role = userData?.role || "member";
-    const redirectMap: Record<string, string> = {
-      admin: "/admin",
-      regional_leader: "/lead",
-      ambassador: "/ambassador",
-      member: "/member",
-    };
-
-    return NextResponse.redirect(new URL(redirectMap[role] || "/member", request.url));
-  }
-
-  // If public route and not logged in, allow
+  // For public routes with no user, return early without any DB query
   if (isPublicRoute && !user) {
     return supabaseResponse;
   }
@@ -51,7 +30,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // If user exists, check role-based access
+  // User exists - fetch role ONCE
   if (user) {
     const { data: userData } = await supabase
       .from("users")
@@ -60,6 +39,17 @@ export async function middleware(request: NextRequest) {
       .single();
 
     const role = userData?.role || "member";
+
+    // If on auth pages, redirect to role dashboard
+    if (isAuthRoute) {
+      const redirectMap: Record<string, string> = {
+        admin: "/admin",
+        regional_leader: "/lead",
+        ambassador: "/ambassador",
+        member: "/member",
+      };
+      return NextResponse.redirect(new URL(redirectMap[role] || "/member", request.url));
+    }
 
     // Handle /dashboard redirect
     if (pathname === "/dashboard") {

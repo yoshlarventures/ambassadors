@@ -32,7 +32,7 @@ export function LearningControlsProvider({ children }: { children: ReactNode }) 
 export function useLearningControls() {
   const context = useContext(LearningControlsContext);
   if (context === undefined) {
-    throw new Error("useLearningControls must be used within a LearningControlsProvider");
+    return { controls: null, setControls: () => {} } as LearningControlsContextType;
   }
   return context;
 }

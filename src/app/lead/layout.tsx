@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { Sidebar, SidebarItem } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { LearningControlsProvider } from "@/components/learning/learning-controls-context";
 
 const sidebarItems: SidebarItem[] = [
   { title: "Dashboard", href: "/lead", icon: "LayoutDashboard" },
@@ -47,12 +48,14 @@ export default async function LeadLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header user={user} sidebarItems={sidebarItems} />
-      <div className="flex flex-1">
-        <Sidebar items={sidebarItems} title="Regional Leader" />
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+    <LearningControlsProvider>
+      <div className="flex min-h-screen flex-col">
+        <Header user={user} sidebarItems={sidebarItems} />
+        <div className="flex flex-1">
+          <Sidebar items={sidebarItems} title="Regional Leader" />
+          <main className="flex-1 overflow-auto p-6">{children}</main>
+        </div>
       </div>
-    </div>
+    </LearningControlsProvider>
   );
 }

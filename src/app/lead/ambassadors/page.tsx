@@ -12,7 +12,7 @@ async function getRegionAmbassadors(regionId: string) {
   // First get ambassadors in the region
   const { data: ambassadors, error } = await supabase
     .from("users")
-    .select("*")
+    .select("id, full_name, email, phone, avatar_url, created_at")
     .eq("region_id", regionId)
     .eq("role", "ambassador")
     .order("full_name");

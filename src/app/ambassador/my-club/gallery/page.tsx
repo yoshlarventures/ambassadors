@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-user";
@@ -77,12 +78,13 @@ export default async function GalleryPage({ searchParams }: PageProps) {
                 const session = photo.session as { title: string; session_date: string } | null;
                 return (
                   <div key={photo.id} className="space-y-2">
-                    <div className="aspect-square rounded-lg overflow-hidden bg-muted">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
+                    <div className="relative aspect-square rounded-lg overflow-hidden bg-muted">
+                      <Image
                         src={photo.image_url}
                         alt={photo.caption || "Club photo"}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                       />
                     </div>
                     {session && (

@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import Image from "next/image";
 import { Eye } from "lucide-react";
 
 interface Member {
@@ -149,12 +150,15 @@ export function AdminMembersList({ members, emptyMessage }: AdminMembersListProp
               {viewingMember.approval_screenshot_url && (
                 <div>
                   <div className="text-sm font-medium mb-2">Approval Screenshot</div>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={viewingMember.approval_screenshot_url}
-                    alt="Approval screenshot"
-                    className="w-full max-h-64 object-contain rounded-lg border"
-                  />
+                  <div className="relative w-full h-64">
+                    <Image
+                      src={viewingMember.approval_screenshot_url}
+                      alt="Approval screenshot"
+                      fill
+                      className="object-contain rounded-lg border"
+                      sizes="500px"
+                    />
+                  </div>
                 </div>
               )}
 

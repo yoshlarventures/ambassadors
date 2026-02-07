@@ -24,12 +24,12 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [regions, setRegions] = useState<Region[]>([]);
+  const [regions, setRegions] = useState<Pick<Region, "id" | "name">[]>([]);
 
   useEffect(() => {
     const fetchRegions = async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("regions").select("*").order("name");
+      const { data } = await supabase.from("regions").select("id, name").order("name");
       if (data) setRegions(data);
     };
     fetchRegions();
