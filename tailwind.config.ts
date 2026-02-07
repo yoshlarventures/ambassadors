@@ -17,6 +17,12 @@ const config: Config = {
   	},
   	extend: {
   		colors: {
+  			brand: {
+  				orange: '#ff6005',
+  				yellow: '#feb703',
+  				'orange-light': '#ff8040',
+  				'yellow-light': '#fec940',
+  			},
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -62,7 +68,28 @@ const config: Config = {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
-  		}
+  		},
+  		boxShadow: {
+  			'brand': '0 8px 30px rgba(255, 96, 5, 0.25)',
+  			'brand-lg': '0 12px 40px rgba(255, 96, 5, 0.35)',
+  			'elevated': '0 20px 60px rgba(0, 0, 0, 0.1)',
+  			'card': '0 4px 24px rgba(0, 0, 0, 0.06)',
+  			'card-hover': '0 12px 40px rgba(0, 0, 0, 0.1)',
+  		},
+  		keyframes: {
+  			marquee: {
+  				'0%': { transform: 'translateX(0%)' },
+  				'100%': { transform: 'translateX(-50%)' },
+  			},
+  			'marquee-reverse': {
+  				'0%': { transform: 'translateX(-50%)' },
+  				'100%': { transform: 'translateX(0%)' },
+  			},
+  		},
+  		animation: {
+  			marquee: 'marquee 40s linear infinite',
+  			'marquee-reverse': 'marquee-reverse 40s linear infinite',
+  		},
   	}
   },
   plugins: [require("tailwindcss-animate")],

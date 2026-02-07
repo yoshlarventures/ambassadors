@@ -1,134 +1,105 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Calendar, Trophy, MapPin } from "lucide-react";
+import dynamic from "next/dynamic";
+import { createClient } from "@/lib/supabase/server";
+import Navbar from "@/components/landing/navbar";
+import { Footer } from "@/components/landing/footer";
+import { SectionDivider } from "@/components/landing/section-divider";
 
-export default function Home() {
+const SmoothScrollProvider = dynamic(
+  () => import("@/components/landing/smooth-scroll-provider").then((m) => m.SmoothScrollProvider),
+  { ssr: false }
+);
+const HeroSection = dynamic(
+  () => import("@/components/landing/hero-section").then((m) => m.HeroSection),
+  { ssr: false }
+);
+const ValueCards = dynamic(
+  () => import("@/components/landing/value-cards").then((m) => m.ValueCards),
+  { ssr: false }
+);
+const TextReveal = dynamic(
+  () => import("@/components/landing/text-reveal").then((m) => m.TextReveal),
+  { ssr: false }
+);
+const HowItWorks = dynamic(
+  () => import("@/components/landing/how-it-works").then((m) => m.HowItWorks),
+  { ssr: false }
+);
+const StatsSection = dynamic(
+  () => import("@/components/landing/stats-section").then((m) => m.StatsSection),
+  { ssr: false }
+);
+const AboutAmbassadors = dynamic(
+  () => import("@/components/landing/about-ambassadors").then((m) => m.AboutAmbassadors),
+  { ssr: false }
+);
+const EventsMarquee = dynamic(
+  () => import("@/components/landing/events-marquee").then((m) => m.EventsMarquee),
+  { ssr: false }
+);
+const PartnersSection = dynamic(
+  () => import("@/components/landing/partners-section").then((m) => m.PartnersSection),
+  { ssr: false }
+);
+const FinalCta = dynamic(
+  () => import("@/components/landing/final-cta").then((m) => m.FinalCta),
+  { ssr: false }
+);
+
+async function getUpcomingEvents() {
+  const supabase = await createClient();
+  const today = new Date().toISOString().split("T")[0];
+
+  const { data } = await supabase
+    .from("events")
+    .select(`
+      id,
+      title,
+      event_date,
+      location,
+      cover_image_url,
+      regions(name),
+      event_photos(image_url)
+    `)
+    .eq("status", "approved")
+    .gte("event_date", today)
+    .order("event_date", { ascending: true })
+    .limit(5);
+
+  return (data || []).map((e) => {
+    const photos = (e.event_photos as unknown as { image_url: string }[]) || [];
+    return {
+      id: e.id,
+      title: e.title,
+      date: e.event_date,
+      location: e.location,
+      region: (e.regions as unknown as { name: string } | null)?.name || "",
+      image: e.cover_image_url || photos[0]?.image_url || null,
+    };
+  });
+}
+
+export default async function Home() {
+  const events = await getUpcomingEvents();
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted">
-      {/* Header */}
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Trophy className="h-6 w-6" />
-            <span className="font-semibold text-lg">Startup Ambassadors</span>
-          </div>
-          <nav className="flex items-center gap-4">
-            <Link href="/events">
-              <Button variant="ghost">Events</Button>
-            </Link>
-            <Link href="/login">
-              <Button variant="ghost">Login</Button>
-            </Link>
-            <Link href="/register">
-              <Button>Get Started</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* Hero Section */}
-      <section className="container py-24 md:py-32">
-        <div className="flex flex-col items-center text-center gap-8">
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-            Empowering Startup
-            <br />
-            <span className="text-primary">Ambassadors</span> Across Uzbekistan
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-2xl">
-            Join a network of 200+ ambassadors running startup clubs across 14 regions.
-            Organize events, track progress, and earn recognition for your impact.
-          </p>
-          <div className="flex gap-4">
-            <Link href="/register">
-              <Button size="lg">Become an Ambassador</Button>
-            </Link>
-            <Link href="/events">
-              <Button size="lg" variant="outline">Browse Events</Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="container py-16">
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader>
-              <Users className="h-10 w-10 mb-2 text-primary" />
-              <CardTitle>Startup Clubs</CardTitle>
-              <CardDescription>
-                Run your own startup club and build a community of entrepreneurs
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Calendar className="h-10 w-10 mb-2 text-primary" />
-              <CardTitle>Events & Sessions</CardTitle>
-              <CardDescription>
-                Organize workshops, meetups, and networking events
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <Trophy className="h-10 w-10 mb-2 text-primary" />
-              <CardTitle>Gamification</CardTitle>
-              <CardDescription>
-                Earn points, climb leaderboards, and unlock achievements
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <MapPin className="h-10 w-10 mb-2 text-primary" />
-              <CardTitle>14 Regions</CardTitle>
-              <CardDescription>
-                Connect with ambassadors across all regions of Uzbekistan
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="container py-16">
-        <div className="grid gap-8 md:grid-cols-4 text-center">
-          <div>
-            <div className="text-4xl font-bold">200+</div>
-            <div className="text-muted-foreground">Ambassadors</div>
-          </div>
-          <div>
-            <div className="text-4xl font-bold">14</div>
-            <div className="text-muted-foreground">Regions</div>
-          </div>
-          <div>
-            <div className="text-4xl font-bold">500+</div>
-            <div className="text-muted-foreground">Events</div>
-          </div>
-          <div>
-            <div className="text-4xl font-bold">10,000+</div>
-            <div className="text-muted-foreground">Participants</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t py-8">
-        <div className="container flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Trophy className="h-5 w-5" />
-            <span className="font-semibold">Startup Ambassadors</span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Building the startup ecosystem in Uzbekistan
-          </p>
-        </div>
-      </footer>
-    </div>
+    <SmoothScrollProvider>
+      <main className="overflow-x-hidden">
+        <Navbar />
+        <HeroSection />
+        <ValueCards />
+        <SectionDivider variant="wave" direction="white-to-warm" />
+        <TextReveal />
+        <SectionDivider variant="wave-inverse" direction="warm-to-white" />
+        <HowItWorks />
+        <StatsSection />
+        <AboutAmbassadors />
+        <SectionDivider variant="slope" direction="white-to-warm" />
+        <EventsMarquee events={events} />
+        <SectionDivider variant="slope-inverse" direction="warm-to-white" />
+        <PartnersSection />
+        <FinalCta />
+        <Footer />
+      </main>
+    </SmoothScrollProvider>
   );
 }
