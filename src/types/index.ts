@@ -25,6 +25,8 @@ export interface User {
   bio: string | null;
   exode_user_id?: number | null;
   exode_linked_at?: string | null;
+  exode_course_points?: number | null;
+  exode_points_synced_at?: string | null;
   created_at: string;
   updated_at: string;
 }

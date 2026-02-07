@@ -15,6 +15,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Trophy,
   Bell,
   LogOut,
@@ -30,10 +36,18 @@ import {
   ListTodo,
   BarChart3,
   Image as ImageIcon,
+  GraduationCap,
+  RefreshCw,
+  Maximize2,
+  Minimize2,
+  ExternalLink,
+  Unlink,
+  Loader2,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { SidebarItem, IconName } from "./sidebar";
 import { toast } from "sonner";
+import { useLearningControls } from "@/components/learning/learning-controls-context";
 
 const iconMap: Record<IconName, React.ComponentType<{ className?: string }>> = {
   LayoutDashboard,
@@ -47,6 +61,7 @@ const iconMap: Record<IconName, React.ComponentType<{ className?: string }>> = {
   BarChart3,
   Trophy,
   ImageIcon,
+  GraduationCap,
 };
 
 interface HeaderProps {
@@ -56,6 +71,7 @@ interface HeaderProps {
 
 export function Header({ user, sidebarItems }: HeaderProps) {
   const router = useRouter();
+  const { controls: learningControls } = useLearningControls();
 
   const handleSignOut = async () => {
     const supabase = createClient();
@@ -114,6 +130,80 @@ export function Header({ user, sidebarItems }: HeaderProps) {
 
       {/* Right side */}
       <div className="flex items-center gap-2">
+        {/* Learning controls - shown when on learning page */}
+        {learningControls && (
+          <TooltipProvider delayDuration={0}>
+            <div className="flex items-center gap-1 mr-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={learningControls.onRefresh}
+                    disabled={learningControls.isLoading}
+                    className="h-8 w-8"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${learningControls.isLoading ? "animate-spin" : ""}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Refresh</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={learningControls.onToggleFullscreen}
+                    className="h-8 w-8"
+                  >
+                    {learningControls.isFullscreen ? (
+                      <Minimize2 className="h-4 w-4" />
+                    ) : (
+                      <Maximize2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {learningControls.isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+                </TooltipContent>
+              </Tooltip>
+
+              {learningControls.iframeUrl && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={learningControls.onOpenNewTab}
+                      className="h-8 w-8"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Open in new tab</TooltipContent>
+                </Tooltip>
+              )}
+
+              <div className="w-px h-5 bg-border mx-1" />
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={learningControls.onUnlink}
+                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  >
+                    <Unlink className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Unlink account</TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
+        )}
+
         {/* Notifications */}
         <Button variant="ghost" size="icon" asChild>
           <Link href="/notifications">

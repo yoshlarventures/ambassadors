@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Loader2, ImageIcon, X, Plus } from "lucide-react";
+import { awardAttendancePoints } from "@/app/actions/points";
 
 interface ConfirmSessionDialogProps {
   session: Session;
@@ -198,6 +199,12 @@ export function ConfirmSessionDialog({
         if (attendanceError && attendanceError.code !== "23505") {
           console.error("Attendance error:", attendanceError);
         }
+      }
+
+      // Award points to attending members
+      const attendingMemberIds = members.filter(m => attendance[m.id]).map(m => m.id);
+      if (attendingMemberIds.length > 0) {
+        await awardAttendancePoints(attendingMemberIds, session.id, session.title, session.session_date);
       }
 
       toast.success("Session confirmed successfully!");

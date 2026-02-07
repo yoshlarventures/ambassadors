@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentUser } from "@/lib/auth/get-user";
 import { ClubProfile } from "./club-profile";
 import { ClubSwitcher } from "./club-switcher";
+import { ClubLeaderboardCard } from "./club-leaderboard-card";
 import { Card, CardContent } from "@/components/ui/card";
 
 async function getAmbassadorClubs(ambassadorId: string) {
@@ -60,6 +61,49 @@ async function getClubAttendanceRate(clubId: string) {
 
   const totalRate = sessions.reduce((sum, s) => sum + (s.attendance_rate || 0), 0);
   return Math.round(totalRate / sessions.length);
+}
+
+async function getClubMemberLeaderboard(clubId: string) {
+  const supabase = await createClient();
+
+  // Get approved club members
+  const { data: members } = await supabase
+    .from("club_members")
+    .select("user_id, users(id, full_name, avatar_url)")
+    .eq("club_id", clubId)
+    .eq("status", "approved");
+
+  if (!members || members.length === 0) return [];
+
+  // Get all points for these members
+  const memberIds = members.map(m => m.user_id);
+  const { data: pointsData } = await supabase
+    .from("points")
+    .select("user_id, amount")
+    .in("user_id", memberIds);
+
+  // Aggregate points by user
+  const pointsMap: Record<string, number> = {};
+  pointsData?.forEach(p => {
+    pointsMap[p.user_id] = (pointsMap[p.user_id] || 0) + p.amount;
+  });
+
+  type UserInfo = { id: string; full_name: string; avatar_url: string | null };
+  const leaderboard = members
+    .filter(m => m.users)
+    .map(m => {
+      const user = m.users as unknown as UserInfo;
+      return {
+        user_id: m.user_id,
+        full_name: user.full_name,
+        avatar_url: user.avatar_url,
+        total_points: pointsMap[m.user_id] || 0,
+      };
+    })
+    .sort((a, b) => b.total_points - a.total_points)
+    .slice(0, 10);
+
+  return leaderboard;
 }
 
 type ClubData = {
@@ -144,10 +188,11 @@ export default async function MyClubPage({ searchParams }: PageProps) {
     );
   }
 
-  const [pendingMemberCount, ambassadors, attendanceRate] = await Promise.all([
+  const [pendingMemberCount, ambassadors, attendanceRate, leaderboard] = await Promise.all([
     getPendingMemberCount(club.id),
     getClubAmbassadors(club.id),
     getClubAttendanceRate(club.id),
+    getClubMemberLeaderboard(club.id),
   ]);
 
   return (
@@ -164,7 +209,10 @@ export default async function MyClubPage({ searchParams }: PageProps) {
           />
         )}
       </div>
-      <ClubProfile club={club} regions={regions} pendingMemberCount={pendingMemberCount} ambassadors={ambassadors} attendanceRate={attendanceRate} />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ClubProfile club={club} regions={regions} pendingMemberCount={pendingMemberCount} ambassadors={ambassadors} attendanceRate={attendanceRate} />
+        <ClubLeaderboardCard leaderboard={leaderboard} />
+      </div>
     </div>
   );
 }

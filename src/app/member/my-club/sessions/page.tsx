@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth/get-user";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Clock, MapPin, Check, Users } from "lucide-react";
+import { Calendar, Clock, MapPin, Check, Users, X } from "lucide-react";
 
 async function getMemberClub(userId: string) {
   const supabase = await createClient();
@@ -31,6 +31,23 @@ async function getClubSessions(clubId: string) {
   return sessions || [];
 }
 
+async function getMemberAttendance(userId: string) {
+  const supabase = await createClient();
+
+  const { data: attendance } = await supabase
+    .from("session_attendance")
+    .select("session_id, attended")
+    .eq("member_id", userId);
+
+  // Create a map of session_id -> attended status
+  const attendanceMap: Record<string, boolean> = {};
+  attendance?.forEach(a => {
+    attendanceMap[a.session_id] = a.attended;
+  });
+
+  return attendanceMap;
+}
+
 export default async function MemberSessionsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
@@ -40,7 +57,10 @@ export default async function MemberSessionsPage() {
     redirect("/member/my-club");
   }
 
-  const sessions = await getClubSessions(membership.club_id);
+  const [sessions, attendanceMap] = await Promise.all([
+    getClubSessions(membership.club_id),
+    getMemberAttendance(user.id),
+  ]);
 
   const now = new Date();
   // Use local date, not UTC (toISOString gives UTC)
@@ -107,7 +127,7 @@ export default async function MemberSessionsPage() {
               <CardTitle>Past Sessions</CardTitle>
             </CardHeader>
             <CardContent>
-              <SessionsList sessions={pastSessions} />
+              <SessionsList sessions={pastSessions} attendanceMap={attendanceMap} />
             </CardContent>
           </Card>
         </TabsContent>
@@ -116,69 +136,89 @@ export default async function MemberSessionsPage() {
   );
 }
 
-function SessionsList({ sessions }: { sessions: Array<{
-  id: string;
-  title: string;
-  description: string | null;
-  session_date: string;
-  start_time: string;
-  end_time: string | null;
-  location: string | null;
-  is_confirmed: boolean;
-  attendance_rate: number | null;
-}> }) {
+function SessionsList({ sessions, attendanceMap }: {
+  sessions: Array<{
+    id: string;
+    title: string;
+    description: string | null;
+    session_date: string;
+    start_time: string;
+    end_time: string | null;
+    location: string | null;
+    is_confirmed: boolean;
+    attendance_rate: number | null;
+  }>;
+  attendanceMap?: Record<string, boolean>;
+}) {
   if (sessions.length === 0) {
     return <p className="text-muted-foreground text-center py-8">No sessions found</p>;
   }
 
   return (
     <div className="space-y-4">
-      {sessions.map((session) => (
-        <div
-          key={session.id}
-          className="p-4 border rounded-lg space-y-2"
-        >
-          <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="font-medium">{session.title}</h3>
-            {session.is_confirmed && (
-              <Badge variant="secondary">
-                <Check className="mr-1 h-3 w-3" />
-                Confirmed
-              </Badge>
+      {sessions.map((session) => {
+        const hasAttendanceRecord = attendanceMap && session.id in attendanceMap;
+        const wasPresent = hasAttendanceRecord ? attendanceMap[session.id] : null;
+
+        return (
+          <div
+            key={session.id}
+            className="p-4 border rounded-lg space-y-2"
+          >
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-medium">{session.title}</h3>
+              {session.is_confirmed && (
+                <Badge variant="secondary">
+                  <Check className="mr-1 h-3 w-3" />
+                  Confirmed
+                </Badge>
+              )}
+              {session.is_confirmed && session.attendance_rate !== null && (
+                <Badge variant={
+                  session.attendance_rate >= 80 ? "default" :
+                  session.attendance_rate >= 50 ? "secondary" :
+                  "destructive"
+                }>
+                  <Users className="mr-1 h-3 w-3" />
+                  {session.attendance_rate}%
+                </Badge>
+              )}
+              {wasPresent === true && (
+                <Badge variant="default" className="bg-green-600">
+                  <Check className="mr-1 h-3 w-3" />
+                  Present
+                </Badge>
+              )}
+              {wasPresent === false && (
+                <Badge variant="destructive">
+                  <X className="mr-1 h-3 w-3" />
+                  Absent
+                </Badge>
+              )}
+            </div>
+            {session.description && (
+              <p className="text-sm text-muted-foreground">{session.description}</p>
             )}
-            {session.is_confirmed && session.attendance_rate !== null && (
-              <Badge variant={
-                session.attendance_rate >= 80 ? "default" :
-                session.attendance_rate >= 50 ? "secondary" :
-                "destructive"
-              }>
-                <Users className="mr-1 h-3 w-3" />
-                {session.attendance_rate}%
-              </Badge>
-            )}
-          </div>
-          {session.description && (
-            <p className="text-sm text-muted-foreground">{session.description}</p>
-          )}
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              {new Date(session.session_date).toLocaleDateString()}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              {session.start_time.slice(0, 5)}
-              {session.end_time && ` - ${session.end_time.slice(0, 5)}`}
-            </span>
-            {session.location && (
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                {session.location}
+                <Calendar className="h-4 w-4" />
+                {new Date(session.session_date).toLocaleDateString()}
               </span>
-            )}
+              <span className="flex items-center gap-1">
+                <Clock className="h-4 w-4" />
+                {session.start_time.slice(0, 5)}
+                {session.end_time && ` - ${session.end_time.slice(0, 5)}`}
+              </span>
+              {session.location && (
+                <span className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  {session.location}
+                </span>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

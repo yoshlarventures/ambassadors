@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { GraduationCap, ExternalLink, Loader2, AlertCircle, Mail, Phone, MessageCircle, Search, UserPlus, Unlink } from "lucide-react";
+import { GraduationCap, Loader2, AlertCircle, Mail, Phone, MessageCircle, Search, UserPlus, Unlink, RefreshCw } from "lucide-react";
 import { User } from "@/types";
 import { SearchByType } from "@/lib/exode/types";
+import { cn } from "@/lib/utils";
+import { useLearningControls } from "./learning-controls-context";
 
 interface LearningPageProps {
   user: User;
@@ -31,15 +33,14 @@ export function LearningPage({ user }: LearningPageProps) {
   const [iframeUrl, setIframeUrl] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isUnlinking, setIsUnlinking] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [iframeLoading, setIframeLoading] = useState(true);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // Fetch auth token when component mounts and account is linked
-  useEffect(() => {
-    if (isLinked) {
-      fetchAuthToken();
-    }
-  }, [isLinked]);
+  const { setControls } = useLearningControls();
 
-  const fetchAuthToken = async () => {
+  // Define callbacks first (before useEffects that use them)
+  const fetchAuthToken = useCallback(async () => {
     setAuthStatus("loading");
     setAuthError(null);
 
@@ -65,9 +66,9 @@ export function LearningPage({ user }: LearningPageProps) {
       setAuthError(error instanceof Error ? error.message : "Failed to load learning platform");
       setAuthStatus("error");
     }
-  };
+  }, []);
 
-  const handleUnlink = async () => {
+  const handleUnlink = useCallback(async () => {
     if (!confirm("Are you sure you want to unlink your Exode account? You'll need to re-link it to access the learning platform.")) {
       return;
     }
@@ -95,7 +96,45 @@ export function LearningPage({ user }: LearningPageProps) {
     } finally {
       setIsUnlinking(false);
     }
-  };
+  }, []);
+
+  const handleRefreshIframe = useCallback(() => {
+    if (iframeRef.current && iframeUrl) {
+      setIframeLoading(true);
+      iframeRef.current.src = iframeUrl;
+    }
+  }, [iframeUrl]);
+
+  const toggleFullscreen = useCallback(() => {
+    setIsFullscreen(prev => !prev);
+  }, []);
+
+  // Fetch auth token when component mounts and account is linked
+  useEffect(() => {
+    if (isLinked) {
+      fetchAuthToken();
+    }
+  }, [isLinked, fetchAuthToken]);
+
+  // Set/clear controls in context
+  useEffect(() => {
+    if (authStatus === "success" && iframeUrl) {
+      setControls({
+        iframeUrl,
+        isLoading: iframeLoading,
+        isFullscreen,
+        onRefresh: handleRefreshIframe,
+        onToggleFullscreen: toggleFullscreen,
+        onUnlink: handleUnlink,
+        onOpenNewTab: () => window.open(iframeUrl, "_blank"),
+      });
+    } else {
+      setControls(null);
+    }
+
+    // Cleanup on unmount
+    return () => setControls(null);
+  }, [authStatus, iframeUrl, iframeLoading, isFullscreen, setControls, handleRefreshIframe, toggleFullscreen, handleUnlink]);
 
   const getSearchValue = (): string | null => {
     switch (selectedIdentifier) {
@@ -226,158 +265,148 @@ export function LearningPage({ user }: LearningPageProps) {
     const canSearch = !!currentValue;
 
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Learning</h1>
-          <p className="text-muted-foreground">Access courses and track your progress</p>
-        </div>
+      <div className="flex items-center justify-center min-h-[calc(100vh-180px)] bg-muted/30 -m-6 p-6">
+        <Card className="w-full max-w-md shadow-lg">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-primary/5 ring-4 ring-primary/10">
+              <GraduationCap className="h-7 w-7 text-primary" />
+            </div>
+            <CardTitle className="text-xl">Connect Your Account</CardTitle>
+            <CardDescription className="text-sm">
+              Link your Exode LMS account to access courses and track progress
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5 pt-2">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-muted-foreground">Search using:</Label>
+              <div className="space-y-2">
+                {identifierOptions.map((option) => {
+                  const isSelected = selectedIdentifier === option.type;
 
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <GraduationCap className="h-6 w-6 text-primary" />
-              </div>
-              <CardTitle>Connect Your Learning Account</CardTitle>
-              <CardDescription>
-                Link your Exode account to access courses and track your progress.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Search for your account using:</Label>
-                <div className="space-y-2">
-                  {identifierOptions.map((option) => {
-                    const isSelected = selectedIdentifier === option.type;
+                  return (
+                    <div key={option.type}>
+                      <button
+                        type="button"
+                        className={cn(
+                          "w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-all",
+                          isSelected
+                            ? "border-primary bg-primary/5 ring-1 ring-primary/20"
+                            : "border-border hover:bg-muted/50 hover:border-muted-foreground/20"
+                        )}
+                        onClick={() => {
+                          setSelectedIdentifier(option.type);
+                          resetSearch();
+                        }}
+                      >
+                        <div className={cn(
+                          "flex h-8 w-8 items-center justify-center rounded-full transition-colors",
+                          isSelected ? "bg-primary text-primary-foreground" : "bg-muted"
+                        )}>
+                          {option.icon}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium text-sm">{option.label}</span>
+                          {!option.showInput && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              {option.type === "email" ? user.email : option.type === "phone" ? user.phone : ""}
+                            </p>
+                          )}
+                        </div>
+                        {isSelected && (
+                          <div className="h-2 w-2 rounded-full bg-primary" />
+                        )}
+                      </button>
 
-                    return (
-                      <div key={option.type}>
-                        <label
-                          className={`flex items-center space-x-3 rounded-lg border p-3 cursor-pointer transition-colors ${
-                            isSelected
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:bg-muted/50"
-                          }`}
-                          onClick={() => {
-                            setSelectedIdentifier(option.type);
-                            resetSearch();
-                          }}
-                        >
-                          <input
-                            type="radio"
-                            name="identifier"
-                            value={option.type}
-                            checked={isSelected}
-                            onChange={() => {
-                              setSelectedIdentifier(option.type);
+                      {/* Show input field for phone and telegram when selected */}
+                      {isSelected && option.showInput && (
+                        <div className="mt-2 ml-11">
+                          <Input
+                            type={option.type === "phone" ? "tel" : "text"}
+                            placeholder={option.type === "phone" ? "+998901234567" : "@username or numeric ID"}
+                            value={option.type === "phone" ? manualPhone : manualTelegram}
+                            onChange={(e) => {
+                              if (option.type === "phone") {
+                                setManualPhone(e.target.value);
+                              } else {
+                                setManualTelegram(e.target.value);
+                              }
                               resetSearch();
                             }}
-                            className="h-4 w-4 text-primary"
+                            className="text-sm h-9"
                           />
-                          <span className="flex items-center gap-2">
-                            {option.icon}
-                            <span className="font-medium">{option.label}:</span>
-                          </span>
-                          {!option.showInput && (
-                            <span className="flex-1 text-sm text-muted-foreground truncate">
-                              {option.type === "email" ? user.email : option.type === "phone" ? user.phone : ""}
-                            </span>
-                          )}
-                        </label>
-
-                        {/* Show input field for phone and telegram when selected */}
-                        {isSelected && option.showInput && (
-                          <div className="mt-2 ml-7">
-                            <Input
-                              type={option.type === "phone" ? "tel" : "text"}
-                              placeholder={option.type === "phone" ? "+998901234567" : "@username or numeric ID"}
-                              value={option.type === "phone" ? manualPhone : manualTelegram}
-                              onChange={(e) => {
-                                if (option.type === "phone") {
-                                  setManualPhone(e.target.value);
-                                } else {
-                                  setManualTelegram(e.target.value);
-                                }
-                                resetSearch();
-                              }}
-                              className="text-sm"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
+            </div>
 
-              {/* Error message */}
-              {linkError && (
-                <div className="flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  <span>{linkError}</span>
-                </div>
-              )}
+            {/* Error message */}
+            {linkError && (
+              <div className="flex items-center gap-2 rounded-lg bg-destructive/10 border border-destructive/20 p-3 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>{linkError}</span>
+              </div>
+            )}
 
-              {/* Not found message */}
-              {linkStatus === "not_found" && searchResult && (
-                <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 p-3 text-sm text-amber-700">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                  <div className="space-y-2">
-                    <span>{searchResult}</span>
-                  </div>
-                </div>
-              )}
+            {/* Not found message */}
+            {linkStatus === "not_found" && searchResult && (
+              <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/20 p-3 text-sm text-amber-700 dark:text-amber-500">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+                <span>{searchResult}</span>
+              </div>
+            )}
 
-              {/* Action buttons */}
-              <div className="space-y-2">
-                {/* Search button - always visible */}
+            {/* Action buttons */}
+            <div className="space-y-2 pt-1">
+              {/* Search button - always visible */}
+              <Button
+                onClick={handleSearch}
+                disabled={linkStatus === "searching" || linkStatus === "creating" || !canSearch}
+                className="w-full h-10"
+                variant={linkStatus === "not_found" ? "outline" : "default"}
+              >
+                {linkStatus === "searching" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Searching...
+                  </>
+                ) : (
+                  <>
+                    <Search className="mr-2 h-4 w-4" />
+                    Find My Account
+                  </>
+                )}
+              </Button>
+
+              {/* Create account button - shown after not found or while creating */}
+              {(linkStatus === "not_found" || linkStatus === "creating") && (
                 <Button
-                  onClick={handleSearch}
-                  disabled={linkStatus === "searching" || linkStatus === "creating" || !canSearch}
-                  className="w-full"
-                  variant={linkStatus === "not_found" ? "outline" : "default"}
+                  onClick={handleCreateAccount}
+                  disabled={linkStatus === "creating" || !canSearch}
+                  className="w-full h-10"
                 >
-                  {linkStatus === "searching" ? (
+                  {linkStatus === "creating" ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Searching...
+                      Creating Account...
                     </>
                   ) : (
                     <>
-                      <Search className="mr-2 h-4 w-4" />
-                      Search Account
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Create New Account
                     </>
                   )}
                 </Button>
+              )}
+            </div>
 
-                {/* Create account button - shown after not found or while creating */}
-                {(linkStatus === "not_found" || linkStatus === "creating") && (
-                  <Button
-                    onClick={handleCreateAccount}
-                    disabled={linkStatus === "creating" || !canSearch}
-                    className="w-full"
-                  >
-                    {linkStatus === "creating" ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating Account...
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="mr-2 h-4 w-4" />
-                        Create New Account
-                      </>
-                    )}
-                  </Button>
-                )}
-              </div>
-
-              <p className="text-xs text-muted-foreground text-center">
-                Search using different methods if your account is not found with one.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+            <p className="text-xs text-muted-foreground text-center pt-1">
+              Try different search methods if your account is not found
+            </p>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -385,18 +414,15 @@ export function LearningPage({ user }: LearningPageProps) {
   // Loading state
   if (authStatus === "loading") {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Learning</h1>
-            <p className="text-muted-foreground">Access courses and track your progress</p>
+      <div className="flex items-center justify-center min-h-[calc(100vh-180px)] bg-muted/30 -m-6">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="h-16 w-16 rounded-full border-4 border-muted" />
+            <div className="absolute inset-0 h-16 w-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
           </div>
-        </div>
-
-        <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-muted-foreground">Loading learning platform...</p>
+            <p className="font-medium">Connecting to Learning Platform</p>
+            <p className="text-sm text-muted-foreground">Setting up your session...</p>
           </div>
         </div>
       </div>
@@ -406,70 +432,66 @@ export function LearningPage({ user }: LearningPageProps) {
   // Error state
   if (authStatus === "error") {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Learning</h1>
-            <p className="text-muted-foreground">Access courses and track your progress</p>
-          </div>
-        </div>
-
-        <Card>
-          <CardContent className="py-12 text-center">
-            <AlertCircle className="h-12 w-12 mx-auto text-destructive mb-4" />
-            <h3 className="font-semibold">Failed to load learning platform</h3>
-            <p className="text-muted-foreground mb-4">{authError}</p>
-            <Button onClick={fetchAuthToken}>Try Again</Button>
+      <div className="flex items-center justify-center min-h-[calc(100vh-180px)] bg-muted/30 -m-6 p-6">
+        <Card className="max-w-md">
+          <CardContent className="pt-6 text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10">
+              <AlertCircle className="h-6 w-6 text-destructive" />
+            </div>
+            <h3 className="font-semibold text-lg mb-2">Connection Failed</h3>
+            <p className="text-muted-foreground text-sm mb-6">{authError || "Unable to connect to the learning platform. Please try again."}</p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={fetchAuthToken} className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Try Again
+              </Button>
+              <Button variant="outline" onClick={handleUnlink} className="gap-2">
+                <Unlink className="h-4 w-4" />
+                Unlink Account
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Linked and authenticated - show iframe
+  // Linked and authenticated - show iframe (fullscreen takes over entire viewport)
   return (
-    <div className="space-y-4 h-full flex flex-col">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Learning</h1>
-          <p className="text-muted-foreground">Access courses and track your progress</p>
-        </div>
-        <div className="flex items-center gap-4">
-          {iframeUrl && (
-            <a
-              href={iframeUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
-            >
-              Open in New Tab <ExternalLink className="h-4 w-4" />
-            </a>
-          )}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleUnlink}
-            disabled={isUnlinking}
-            className="text-muted-foreground"
-          >
-            {isUnlinking ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Unlink className="mr-2 h-4 w-4" />
-            )}
-            Unlink Account
-          </Button>
-        </div>
-      </div>
+    <div className={cn(
+      isFullscreen
+        ? "fixed inset-0 z-50 bg-background"
+        : "-m-6"
+    )}>
+      {/* Iframe Container */}
+      <div className="relative h-full bg-muted/30">
+        {/* Loading Overlay */}
+        {iframeLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+            <div className="flex flex-col items-center gap-3">
+              <div className="relative">
+                <div className="h-12 w-12 rounded-full border-4 border-muted" />
+                <div className="absolute inset-0 h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+              </div>
+              <p className="text-sm text-muted-foreground">Loading courses...</p>
+            </div>
+          </div>
+        )}
 
-      <div className="flex-1 min-h-[600px] rounded-lg border bg-background overflow-hidden">
         {iframeUrl && (
           <iframe
+            ref={iframeRef}
             src={iframeUrl}
-            className="w-full h-full min-h-[600px]"
+            className={cn(
+              "w-full h-full border-0",
+              isFullscreen
+                ? "min-h-screen"
+                : "min-h-[calc(100vh-130px)]"
+            )}
             title="Exode Learning Platform"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
+            onLoad={() => setIframeLoading(false)}
           />
         )}
       </div>

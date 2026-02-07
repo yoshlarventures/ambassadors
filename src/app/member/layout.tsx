@@ -18,6 +18,8 @@ const sidebarItems: SidebarItem[] = [
     ],
   },
   { title: "Events", href: "/member/events", icon: "Calendar" },
+  { title: "Tasks", href: "/member/tasks", icon: "ListTodo" },
+  { title: "Leaderboard", href: "/member/leaderboard", icon: "Trophy" },
 ];
 
 export default async function MemberLayout({

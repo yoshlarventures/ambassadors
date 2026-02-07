@@ -11,7 +11,15 @@
       "Bash(npx supabase db push:*)",
       "Bash(timeout:*)",
       "Bash(dir:*)",
-      "Bash(npx next dev -p 3020)"
+      "Bash(npx next dev -p 3020)",
+      "Bash(taskkill:*)",
+      "Bash(git add:*)",
+      "WebFetch(domain:docs.exode.biz)",
+      "Bash(git -C \"C:\\\\Users\\\\Lenovo\\\\Documents\\\\ambassadors.app\" status)",
+      "Bash(git -C \"C:\\\\Users\\\\Lenovo\\\\Documents\\\\ambassadors.app\" diff --stat)",
+      "Bash(git -C \"C:\\\\Users\\\\Lenovo\\\\Documents\\\\ambassadors.app\" commit -m \"$\\(cat <<''EOF''\nAdd phone input formatting, searchable region dropdown, and profile improvements\n\n- Create PhoneInput component with +998 prefix and XX XXX XX XX format\n- Create Combobox component for searchable dropdown \\(region selection\\)\n- Add Command and Popover UI components for combobox functionality\n- Update registration page with PhoneInput and searchable region dropdown\n- Add required region field to registration\n- Update profile page with PhoneInput and avatar upload functionality\n- Restrict phone/region editing: only admin can always edit, others only if empty\n- Add password change functionality to profile page\n- Create avatars storage bucket migration\n- Update user trigger to save region_id from metadata\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git -C \"C:\\\\Users\\\\Lenovo\\\\Documents\\\\ambassadors.app\" push)",
+      "Bash(more:*)"
     ]
   }
 }

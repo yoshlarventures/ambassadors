@@ -20,6 +20,12 @@ const sidebarItems: SidebarItem[] = [
   },
   { title: "Resources", href: "/admin/resources", icon: "BookOpen" },
   { title: "Tasks", href: "/admin/tasks", icon: "ListTodo" },
+  {
+    title: "Learning",
+    href: "/admin/learning-progress",
+    icon: "GraduationCap",
+  },
+  { title: "Leaderboard", href: "/admin/leaderboard", icon: "Trophy" },
   { title: "Insights", href: "/admin/insights", icon: "BarChart3" },
 ];
 

@@ -5,6 +5,7 @@ export const POINTS = {
   SESSION_CONFIRMED: 33,
   EVENT_COMPLETED: 100,
   SESSION_ATTENDED: 10, // For member leaderboard
+  MEMBER_SESSION_ATTENDED: 30, // For members attending sessions
 } as const;
 
 export async function awardPoints(
@@ -97,4 +98,48 @@ export async function getLeaderboard(regionId?: string, limit: number = 20) {
   return Object.values(userPoints)
     .sort((a, b) => b.total_points - a.total_points)
     .slice(0, limit);
+}
+
+export async function getClubMemberLeaderboard(clubId: string, limit: number = 50) {
+  const supabase = await createClient();
+
+  // Get approved club members
+  const { data: members } = await supabase
+    .from("club_members")
+    .select("user_id, users(id, full_name, avatar_url)")
+    .eq("club_id", clubId)
+    .eq("status", "approved");
+
+  if (!members || members.length === 0) return [];
+
+  // Get all points for these members
+  const memberIds = members.map(m => m.user_id);
+  const { data: pointsData } = await supabase
+    .from("points")
+    .select("user_id, amount")
+    .in("user_id", memberIds);
+
+  // Aggregate points by user
+  const pointsMap: Record<string, number> = {};
+  pointsData?.forEach(p => {
+    pointsMap[p.user_id] = (pointsMap[p.user_id] || 0) + p.amount;
+  });
+
+  // Build leaderboard
+  type UserInfo = { id: string; full_name: string; avatar_url: string | null };
+  const leaderboard = members
+    .filter(m => m.users)
+    .map(m => {
+      const user = m.users as unknown as UserInfo;
+      return {
+        user_id: m.user_id,
+        full_name: user.full_name,
+        avatar_url: user.avatar_url,
+        total_points: pointsMap[m.user_id] || 0,
+      };
+    })
+    .sort((a, b) => b.total_points - a.total_points)
+    .slice(0, limit);
+
+  return leaderboard;
 }

@@ -18,6 +18,15 @@ const sidebarItems: SidebarItem[] = [
     ],
   },
   { title: "Tasks", href: "/lead/tasks", icon: "ListTodo" },
+  {
+    title: "Learning",
+    href: "/lead/learning",
+    icon: "GraduationCap",
+    subItems: [
+      { title: "My Learning", href: "/lead/learning" },
+      { title: "Ambassador Progress", href: "/lead/learning-progress" },
+    ],
+  },
   { title: "Leaderboard", href: "/lead/leaderboard", icon: "Trophy" },
   { title: "Resources", href: "/lead/resources", icon: "BookOpen" },
 ];
